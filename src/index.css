@@ -15,6 +15,9 @@ body {
   h1 {
     @apply text-2xl;
   }
+  h2 {
+    @apply text-xl;
+  }
   input {
     @apply py-1 px-2 rounded border;
   }

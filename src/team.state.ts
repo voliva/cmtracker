@@ -7,6 +7,7 @@ import {
   distinctUntilChanged,
   filter,
   map,
+  mapTo,
   scan,
   startWith,
   switchMap,
@@ -26,27 +27,44 @@ interface PlayerInfo {
 type EncounterInfo = Record<string, Record<string, boolean>>;
 
 export const [infoRefresh$, triggerRefresh] = createSignal();
+
+const [deleteEnable$, enableDelete] = createSignal();
+export const [useIsDeleteEnabled] = bind(
+  deleteEnable$.pipe(mapTo(true)),
+  false
+);
+(window as any).enableDelete = enableDelete;
+
 export const [filterChange$, setFilter] = createSignal<string>();
 export const [useFilter, filter$] = bind(filterChange$, "");
 
 export const [statusTypeChange$, toggleStatusType] = createSignal<
   "normal" | "perm"
 >();
-const initialStatusTypes = {
-  normal: true,
-  perm: true,
-};
-export const [useStatusTypes] = bind(
-  statusTypeChange$.pipe(
-    scan(
-      (acc, type) => ({
-        ...acc,
-        [type]: !acc[type],
-      }),
-      initialStatusTypes
-    )
+const selectedStatusType$ = statusTypeChange$.pipe(
+  scan(
+    (acc, type) => (acc === type ? null : type),
+    null as "normal" | "perm" | null
   ),
-  initialStatusTypes
+  startWith(null)
+);
+
+export const [useStatusTypes] = bind(
+  selectedStatusType$.pipe(
+    map((v) => {
+      if (!v) {
+        return {
+          normal: true,
+          perm: true,
+        };
+      }
+      return {
+        normal: false,
+        perm: false,
+        [v]: true,
+      };
+    })
+  )
 );
 
 export const [playerMarking$, setPlayerMarked] = createSignal(
@@ -81,6 +99,8 @@ const teamInfo$ = infoRefresh$.pipe(
   switchMap((result) => result.json() as Promise<TeamInfo>),
   shareLatest()
 );
+
+export const [useTeamName] = bind(teamInfo$.pipe(map((t) => t.name)));
 
 export const [usePlayerIds] = bind(
   combineLatest({

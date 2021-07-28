@@ -1,5 +1,3 @@
-// import { useRouteMatch } from "react-router-dom";
-
 import { Subscribe } from "@react-rxjs/core";
 import { FC, FormEvent, useState } from "react";
 import { useRouteMatch } from "react-router-dom";
@@ -9,15 +7,23 @@ import {
   toggleStatusType,
   triggerRefresh,
   useFilter,
+  useIsDeleteEnabled,
   usePlayerIds,
   usePlayerInfo,
   useStatusTypes,
+  useTeamName,
 } from "./team.state";
+import trash from "./assets/trash.svg";
+import checked from "./assets/checked.svg";
+import neutral from "./assets/neutral.svg";
+import cross from "./assets/cross.svg";
+import { Card } from "./Card";
 
 export function Team() {
   return (
     <Subscribe fallback="Loading">
       <div className="flex flex-col gap-4">
+        <Title />
         <Filter />
         <ResultsTable />
         <AddPlayer />
@@ -25,6 +31,17 @@ export function Team() {
     </Subscribe>
   );
 }
+
+const Title = () => {
+  const name = useTeamName();
+
+  return (
+    <Card>
+      <h2>Team: {name}</h2>
+      <p>Share this URL with your team so that they can add their accounts.</p>
+    </Card>
+  );
+};
 
 /// Filter
 const Filter = () => {
@@ -42,16 +59,20 @@ const Filter = () => {
       />
       <div className="flex-grow-0 flex-shrink-0 button-group">
         <button
-          className={statusTypes.normal ? "bg-green-100" : "bg-yellow-100"}
+          className={
+            statusTypes.normal && !statusTypes.perm ? "bg-green-100" : ""
+          }
           onClick={() => toggleStatusType("normal")}
         >
           Normal
         </button>
         <button
-          className={statusTypes.perm ? "bg-green-100" : "bg-yellow-100"}
+          className={
+            statusTypes.perm && !statusTypes.normal ? "bg-green-100" : ""
+          }
           onClick={() => toggleStatusType("perm")}
         >
-          Perm CM
+          CM
         </button>
       </div>
     </div>
@@ -94,35 +115,68 @@ const ResultsTable = () => {
 const PlayerResults: FC<{ id: string }> = ({ id }) => {
   const { info, markStatus } = usePlayerInfo(id);
   const statusTypes = useStatusTypes();
+  const deleteEnabled = useIsDeleteEnabled();
+  const teamId = useRouteMatch<{ id: string }>().params.id;
   const { name, normal, perm } = info;
 
   const isMarked = markStatus === "marked";
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const handleDelete = async () => {
+    setIsSubmitting(true);
+    await fetch(process.env.REACT_APP_SERVER_ROOT + `/team/${teamId}/${id}`, {
+      method: "DELETE",
+    });
+    setIsSubmitting(false);
+
+    triggerRefresh();
+  };
+
   return (
     <tr className={markStatus === "greyedout" ? "opacity-50" : ""}>
       <td>
-        <input
-          type="checkbox"
-          checked={isMarked}
-          onChange={(evt) => setPlayerMarked(id, evt.target.checked)}
-        />
-        {name}
+        <div className="flex items-center pr-5 gap-1">
+          <input
+            type="checkbox"
+            checked={isMarked}
+            onChange={(evt) => setPlayerMarked(id, evt.target.checked)}
+          />
+          <div className="flex-grow">{name}</div>
+          {deleteEnabled && !isSubmitting && (
+            <img
+              alt="delete"
+              src={trash}
+              className="w-5 absolute right-1 cursor-pointer"
+              onClick={handleDelete}
+            />
+          )}
+        </div>
       </td>
       {raids.map(({ wing, raid }) => (
         <td key={wing + raid} className="text-center">
-          {statusTypes.normal && renderStatus(normal[wing]?.[raid])}
-          {statusTypes.perm && renderStatus(perm[wing]?.[raid])}
+          <div className="flex w-10 justify-center gap-1">
+            {statusTypes.normal && renderStatus(normal[wing]?.[raid])}
+            {statusTypes.perm && renderStatus(perm[wing]?.[raid])}
+          </div>
         </td>
       ))}
     </tr>
   );
 };
 
-const renderStatus = (status: boolean | undefined) => {
+const renderStatus = (status: boolean | undefined) => (
+  <img
+    className="inline-block w-5"
+    alt={String(status)}
+    src={getStatusSrc(status)}
+  />
+);
+
+const getStatusSrc = (status: boolean | undefined) => {
   if (status === undefined) {
-    return "-";
+    return neutral;
   }
-  return status ? 1 : 0;
+  return status ? checked : cross;
 };
 
 /// Add Player

@@ -6,7 +6,7 @@ import { history } from "./history";
 function App() {
   return (
     <div className="flex flex-col">
-      <h1 className="my-1">Raid Tracker</h1>
+      <h1 className="my-1">GW2 Raid Progress Tracker</h1>
       <Router history={history}>
         <Switch>
           <Route path="/" exact>
