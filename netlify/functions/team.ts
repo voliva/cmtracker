@@ -15,6 +15,8 @@ const app = Firebase.initializeApp({
 type Response = Exclude<ReturnType<Handler>, void>;
 
 const handler: Handler = async (event, context) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
   const params = event.path.replace("/.netlify/functions/team", "").split("/");
 
   switch (event.httpMethod) {
