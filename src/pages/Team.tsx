@@ -13,11 +13,11 @@ import {
   useStatusTypes,
   useTeamName,
 } from "./team.state";
-import trash from "./assets/trash.svg";
-import checked from "./assets/checked.svg";
-import neutral from "./assets/neutral.svg";
-import cross from "./assets/cross.svg";
-import { Card } from "./Card";
+import trash from "../assets/trash.svg";
+import checked from "../assets/checked.svg";
+import neutral from "../assets/neutral.svg";
+import cross from "../assets/cross.svg";
+import { Card } from "../components/Card";
 
 export function Team() {
   return (

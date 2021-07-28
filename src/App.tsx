@@ -1,6 +1,6 @@
 import { Router, Route, Switch } from "react-router-dom";
-import { Create } from "./Create";
-import { Team } from "./Team";
+import { Create } from "./pages/Create";
+import { Team } from "./pages/Team";
 import { history } from "./history";
 
 function App() {

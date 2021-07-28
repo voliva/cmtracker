@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
-import { Card } from "./Card";
-import { history } from "./history";
+import { Card } from "../components/Card";
+import { history } from "../history";
 
 export function Create() {
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -12,7 +12,7 @@ import {
   startWith,
   switchMap,
 } from "rxjs";
-import { history$ } from "./history";
+import { history$ } from "../history";
 
 interface TeamInfo {
   name: string;
