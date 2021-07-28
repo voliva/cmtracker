@@ -1,0 +1,144 @@
+
+//// ACHIEVEMENTS account + progression
+https://api.guildwars2.com/v2/account/achievements
+Authorization: Bearer <API key>
+
+//// ACHIEVEMENTS INFO - hardcode
+https://api.guildwars2.com/v2/achievements?ids=1840,910,2258
+
+- Weekly CM: 5455
+"bits": [
+  {
+    "type": "Text",
+    "text": "Stronghold of the Faithful—Keep Construct"
+  },
+  {
+    "type": "Text",
+    "text": "Bastion of the Penitent—Cairn the Indomitable"
+  },
+  {
+    "type": "Text",
+    "text": "Bastion of the Penitent—Mursaat Overseer"
+  },
+  {
+    "type": "Text",
+    "text": "Bastion of the Penitent—Samarog"
+  },
+  {
+    "type": "Text",
+    "text": "Bastion of the Penitent—Deimos"
+  },
+  {
+    "type": "Text",
+    "text": "Hall of Chains—Soulless Horror"
+  },
+  {
+    "type": "Text",
+    "text": "Hall of Chains—The Voice in the Void"
+  },
+  {
+    "type": "Text",
+    "text": "Mythwright Gambit—Conjured Amalgamate"
+  },
+  {
+    "type": "Text",
+    "text": "Mythwright Gambit—Nikare and Kenut"
+  },
+  {
+    "type": "Text",
+    "text": "Mythwright Gambit—Qadim"
+  },
+  {
+    "type": "Text",
+    "text": "The Key of Ahdashim—Cardinal Adina"
+  },
+  {
+    "type": "Text",
+    "text": "The Key of Ahdashim—Cardinal Sabir"
+  },
+  {
+    "type": "Text",
+    "text": "The Key of Ahdashim—Qadim the Peerless"
+  }
+]
+
+- Permanent CM
+
+W3 B2 - 3019 Down, Down, Downed
+W4 B1 - 3334 Jaded
+W4 B2 - 3287 Attuned
+W4 B3 - 3342 Harsh Sentence
+W4 B4 - 3292 Solitary Confinement
+W5 B1 - 3993 Exile Executioner
+W5 B3 - 3979 Death Eater
+W6 B1 - 4043 Some Dissasembly Required
+W6 B2 - 4429 Let's Not Do That Again
+W6 B3 - 4355 Heroes of the Forge
+W7 B1 - 4803 Rock Solid
+W7 B2 - 4779 Quell the Storm
+W7 B3 - 4800 Mad with Power
+
+//// WEEKLY NORMAL CLEAR
+GET https://api.guildwars2.com/v2/account/raids
+Authorization: Bearer <API key>
+
+[
+  "gorseval",
+  "xera"
+]
+
+//// RAID INFO - hardcode
+GET https://api.guildwars2.com/v2/raids
+
+[ "forsaken_thicket","bastion_of_the_penitent" ]
+
+//
+
+GET https://api.guildwars2.com/v2/raids/forsaken_thicket
+
+{
+  id": "forsaken_thicket",
+  "wings": [
+      {
+      "id": "spirit_vale",
+      "events": [
+          {
+              "id": "vale_guardian",
+              "type": "Boss"
+          },
+          {
+              "id": "spirit_woods",
+              "type": "Checkpoint"
+          },
+          ...
+      ]
+  },
+  ...
+}
+
+W1 B1 vale_guardian
+W1 E1 spirit_woods
+W1 B2 gorseval
+W1 B3 sabetha
+W2 B1 slothasor
+W2 B2 bandit_trio
+W2 B3 matthias
+W3 B1 escort
+W3 B2 keep_construct
+W3 E1 twisted_castle
+W3 B3 xera
+W4 B1 cairn
+W4 B2 mursaat_overseer
+W4 B3 samarog
+W4 B4 deimos
+W5 B1 soulless_horror
+W5 B2 river_of_souls
+W5 B3 statues_of_grenth
+W5 B4 voice_in_the_void
+W6 B1 conjured_amalgamate
+W6 B2 twin_largos
+W6 B3 qadim
+W7 E1 gate
+W7 B1 adina
+W7 B2 sabir
+W7 B3 qadim_the_peerless

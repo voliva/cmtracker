@@ -1,0 +1,29 @@
+GET teams/{id}
+
+{
+  name: "KOM",
+  players: [{
+    id: "uuid",
+    name: "Oli",
+    normal: {
+      "W1": {
+        "B1": true,
+        "E1": false
+      }
+    },
+    weekly: {
+      "W4": {
+        "B1": false
+      }
+    },
+    perm: {
+      "W4": {
+        "B1": true
+      }
+    }
+  }]
+}
+
+POST teams/{id} - Add player { name, key }
+PUT teams/{id}/{id} - Edit player { name }
+DELETE teams/{id}/{id} - Delete player

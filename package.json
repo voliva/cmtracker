@@ -49,6 +49,7 @@
     "@netlify/functions": "^0.7.2",
     "@types/react-router-dom": "^5.1.8",
     "autoprefixer": "^9",
+    "node-fetch": "^2.6.1",
     "postcss": "^7",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat"
   }
