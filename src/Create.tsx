@@ -1,6 +1,33 @@
+import { FormEvent, useState } from "react";
 import { Card } from "./Card";
+import { history } from "./history";
 
 export function Create() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const handleSubmit = async (evt: FormEvent<HTMLFormElement>) => {
+    evt.preventDefault();
+    const data = new FormData(evt.currentTarget);
+    const name = data.get("name");
+    if (typeof name !== "string") {
+      return;
+    }
+
+    setIsSubmitting(true);
+    const result = await fetch(process.env.REACT_APP_SERVER_ROOT + "/team", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }).then((r) => r.json());
+    setIsSubmitting(false);
+
+    if (result.id) {
+      history.push("/" + result.id);
+    } else {
+      alert(
+        "Woops - something is not working. Check again another day, sorry!"
+      );
+    }
+  };
+
   return (
     <div>
       <Card className="my-4">
@@ -14,12 +41,22 @@ export function Create() {
         </p>
       </Card>
       <Card>
-        <form className="flex flex-col items-center gap-2">
-          <input type="text" placeholder="Team name" />
+        <form
+          className="flex flex-col items-center gap-2"
+          onSubmit={handleSubmit}
+        >
           <input
-            className="px-6 cursor-pointer"
+            disabled={isSubmitting}
+            type="text"
+            placeholder="Team name"
+            name="name"
+            autoComplete="off"
+          />
+          <input
+            disabled={isSubmitting}
+            className={"px-6 " + isSubmitting ? "" : "cursor-pointer"}
             type="submit"
-            value="Create Team"
+            value={isSubmitting ? "Creating team..." : "Create Team"}
           />
         </form>
       </Card>

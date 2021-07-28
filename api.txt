@@ -24,6 +24,7 @@ GET teams/{id}
   }]
 }
 
+POST teams - Create team { name }
 POST teams/{id} - Add player { name, key }
 PUT teams/{id}/{id} - Edit player { name }
 DELETE teams/{id}/{id} - Delete player

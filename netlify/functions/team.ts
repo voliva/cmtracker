@@ -19,7 +19,7 @@ const handler: Handler = async (event, context) => {
 
   switch (event.httpMethod) {
     case "GET":
-      if (params.length !== 2) return undefined;
+      if (params.length !== 2) return;
       return dbRun(async (client) => {
         const team = (
           await client.collection("teams").doc(params[1]).get()
@@ -36,6 +36,111 @@ const handler: Handler = async (event, context) => {
             name: team.name,
             players: playerData,
           }),
+        };
+      });
+    case "POST":
+      if (params.length === 1) {
+        // Create new team
+        const name: string = JSON.parse(event.body).name;
+        if (!name) {
+          return undefined;
+        }
+        return dbRun(async (client) => {
+          const team = await client.collection("teams").add({
+            name,
+            players: [],
+          });
+
+          return {
+            statusCode: 200,
+            body: JSON.stringify({
+              name,
+              players: [],
+              id: team.id,
+            }),
+          };
+        });
+      } else if (params.length === 2) {
+        // Add new player
+        const { name, apiKey } = JSON.parse(event.body);
+        if (!name || !apiKey) {
+          return undefined;
+        }
+        return dbRun(async (client) => {
+          const team = client.collection("teams").doc(params[1]);
+          const existingPlayers = (await team.get()).data().players;
+
+          const id = existingPlayers.length
+            ? (JSON.parse(existingPlayers[existingPlayers.length - 1]).id ||
+                0) + 1
+            : 0;
+          const player = {
+            id,
+            name,
+            apiKey,
+          };
+          team.set({
+            players: [...existingPlayers, JSON.stringify(player)],
+          });
+
+          return {
+            statusCode: 200,
+            body: JSON.stringify(player),
+          };
+        });
+      } else {
+        return;
+      }
+    case "PUT":
+      if (params.length !== 3) {
+        return;
+      }
+      return dbRun(async (client) => {
+        const team = client.collection("teams").doc(params[1]);
+        const existingPlayers = (await team.get())
+          .data()
+          .players.map((p) => JSON.parse(p));
+
+        const index = existingPlayers.findIndex(
+          (p) => p.id === Number(params[2])
+        );
+
+        const name: string = JSON.parse(event.body).name;
+        if (!name || index < 0) {
+          return;
+        }
+
+        existingPlayers[index] = {
+          ...existingPlayers[index],
+          name,
+        };
+
+        team.set({
+          players: existingPlayers.map((p) => JSON.stringify(p)),
+        });
+
+        return {
+          statusCode: 200,
+        };
+      });
+    case "DELETE":
+      if (params.length !== 3) {
+        return;
+      }
+      return dbRun(async (client) => {
+        const team = client.collection("teams").doc(params[1]);
+        const existingPlayers = (await team.get())
+          .data()
+          .players.map((p) => JSON.parse(p));
+
+        team.set({
+          players: existingPlayers
+            .filter((p) => p.id !== Number(params[2]))
+            .map((p) => JSON.stringify(p)),
+        });
+
+        return {
+          statusCode: 200,
         };
       });
   }

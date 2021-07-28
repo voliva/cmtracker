@@ -1,11 +1,13 @@
 // import { useRouteMatch } from "react-router-dom";
 
 import { Subscribe } from "@react-rxjs/core";
-import { FC } from "react";
+import { FC, FormEvent, useState } from "react";
+import { useRouteMatch } from "react-router-dom";
 import {
   setFilter,
   setPlayerMarked,
   toggleStatusType,
+  triggerRefresh,
   useFilter,
   usePlayerIds,
   usePlayerInfo,
@@ -44,12 +46,6 @@ const Filter = () => {
           onClick={() => toggleStatusType("normal")}
         >
           Normal
-        </button>
-        <button
-          className={statusTypes.weekly ? "bg-green-100" : "bg-yellow-100"}
-          onClick={() => toggleStatusType("weekly")}
-        >
-          Weekly CM
         </button>
         <button
           className={statusTypes.perm ? "bg-green-100" : "bg-yellow-100"}
@@ -98,7 +94,7 @@ const ResultsTable = () => {
 const PlayerResults: FC<{ id: string }> = ({ id }) => {
   const { info, markStatus } = usePlayerInfo(id);
   const statusTypes = useStatusTypes();
-  const { name, normal, weekly, perm } = info;
+  const { name, normal, perm } = info;
 
   const isMarked = markStatus === "marked";
 
@@ -115,7 +111,6 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
       {raids.map(({ wing, raid }) => (
         <td key={wing + raid} className="text-center">
           {statusTypes.normal && renderStatus(normal[wing]?.[raid])}
-          {statusTypes.weekly && renderStatus(weekly[wing]?.[raid])}
           {statusTypes.perm && renderStatus(perm[wing]?.[raid])}
         </td>
       ))}
@@ -132,11 +127,56 @@ const renderStatus = (status: boolean | undefined) => {
 
 /// Add Player
 const AddPlayer = () => {
+  const teamId = useRouteMatch<{ id: string }>().params.id;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const handleSubmit = async (evt: FormEvent<HTMLFormElement>) => {
+    evt.preventDefault();
+    const form = evt.currentTarget;
+    const data = new FormData(form);
+    const name = data.get("name");
+    const apiKey = data.get("apiKey");
+    if (typeof name !== "string" || typeof apiKey !== "string") {
+      return;
+    }
+
+    setIsSubmitting(true);
+    const result = await fetch(
+      process.env.REACT_APP_SERVER_ROOT + "/team/" + teamId,
+      {
+        method: "POST",
+        body: JSON.stringify({ name, apiKey }),
+      }
+    ).then((r) => r.json());
+    setIsSubmitting(false);
+
+    if (result.id !== undefined) {
+      triggerRefresh();
+      form.reset();
+    } else {
+      alert(
+        "Woops - something is not working. Check again another day, sorry!"
+      );
+    }
+  };
+
   return (
-    <form className="flex flex-row items-center justify-center gap-1 flex-wrap">
-      <input type="text" placeholder="Name" />
-      <input type="text" placeholder="API Key" />
-      <input className="px-6 cursor-pointer" type="submit" value="Add Player" />
+    <form
+      className="flex flex-row items-center justify-center gap-1 flex-wrap"
+      onSubmit={handleSubmit}
+    >
+      <input type="text" placeholder="Name" name="name" autoComplete="off" />
+      <input
+        type="text"
+        placeholder="API Key"
+        name="apiKey"
+        autoComplete="off"
+      />
+      <input
+        className={"px-6 " + isSubmitting ? "" : "cursor-pointer"}
+        type="submit"
+        value={isSubmitting ? "Adding..." : "Add Player"}
+        disabled={isSubmitting}
+      />
     </form>
   );
 };

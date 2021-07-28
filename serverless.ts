@@ -1,12 +1,20 @@
 import { Handler } from "@netlify/functions";
 import Koa from "koa";
 import dotenv from "dotenv";
+import cors from "@koa/cors";
+import bodyParser from "koa-bodyparser";
 
 dotenv.config({
   path: ".env.local",
 });
 
 const app = new Koa();
+app.use(cors());
+app.use(
+  bodyParser({
+    enableTypes: ["text"],
+  })
+);
 
 app.use(async (ctx) => {
   if (ctx.path.startsWith("/functions/")) {
@@ -30,7 +38,7 @@ app.use(async (ctx) => {
 
     const result = await handler(
       {
-        body: ctx.body,
+        body: ctx.request.body as string,
         headers,
         httpMethod: ctx.method,
         isBase64Encoded: false,
@@ -58,8 +66,9 @@ app.use(async (ctx) => {
           value.map((v) => String(v))
         )
       );
-      ctx.response.body = result.body;
+      ctx.body = result.body;
     }
+    return;
   }
 
   ctx.status = 404;

@@ -4,11 +4,9 @@ import { matchPath } from "react-router-dom";
 import {
   combineLatest,
   defer,
-  delay,
   distinctUntilChanged,
   filter,
   map,
-  of,
   scan,
   startWith,
   switchMap,
@@ -23,20 +21,19 @@ interface PlayerInfo {
   id: string;
   name: string;
   normal: EncounterInfo;
-  weekly: EncounterInfo;
   perm: EncounterInfo;
 }
 type EncounterInfo = Record<string, Record<string, boolean>>;
 
+export const [infoRefresh$, triggerRefresh] = createSignal();
 export const [filterChange$, setFilter] = createSignal<string>();
 export const [useFilter, filter$] = bind(filterChange$, "");
 
 export const [statusTypeChange$, toggleStatusType] = createSignal<
-  "normal" | "weekly" | "perm"
+  "normal" | "perm"
 >();
 const initialStatusTypes = {
   normal: true,
-  weekly: true,
   perm: true,
 };
 export const [useStatusTypes] = bind(
@@ -70,14 +67,18 @@ const markedPlayer$ = defer(() =>
   )
 );
 
-const teamInfo$ = history$.pipe(
-  map((history) => matchPath<{ id: string }>(history.pathname, "/:id")!),
-  filter((v) => !!v),
-  map((v) => v.params.id),
-  distinctUntilChanged(),
-  switchMap(() => {
-    return of(mockData()).pipe(delay(200));
-  }),
+const teamInfo$ = infoRefresh$.pipe(
+  startWith(null),
+  switchMap(() =>
+    history$.pipe(
+      map((history) => matchPath<{ id: string }>(history.pathname, "/:id")!),
+      filter((v) => !!v),
+      map((v) => v.params.id),
+      distinctUntilChanged()
+    )
+  ),
+  switchMap((id) => fetch(process.env.REACT_APP_SERVER_ROOT + "/team/" + id)),
+  switchMap((result) => result.json() as Promise<TeamInfo>),
   shareLatest()
 );
 
@@ -128,109 +129,3 @@ export const [usePlayerInfo] = bind((id: string) =>
     ),
   })
 );
-
-function mockData(): TeamInfo {
-  return {
-    name: "KOM",
-    players: [createPlayer("Oli"), createPlayer("Ulrick")],
-  };
-
-  function createPlayer(name: string) {
-    return {
-      id: "uuid" + name,
-      name,
-      normal: {
-        W1: {
-          B1: false,
-          E1: false,
-          B2: false,
-          B3: false,
-        },
-        W2: {
-          B1: false,
-          B2: false,
-          B3: false,
-        },
-        W3: {
-          B1: false,
-          B2: false,
-          E1: false,
-          B3: false,
-        },
-        W4: {
-          B1: false,
-          B2: false,
-          B3: false,
-          B4: false,
-        },
-        W5: {
-          B1: false,
-          B2: false,
-          B3: false,
-          B4: false,
-        },
-        W6: {
-          B1: false,
-          B2: false,
-          B3: false,
-        },
-        W7: {
-          E1: false,
-          B1: false,
-          B2: false,
-          B3: false,
-        },
-      },
-      weekly: {
-        W3: {
-          B2: false,
-        },
-        W4: {
-          B1: false,
-          B2: false,
-          B3: false,
-          B4: false,
-        },
-        W5: {
-          B1: false,
-          B4: false,
-        },
-        W6: {
-          B1: false,
-          B2: false,
-          B3: false,
-        },
-        W7: {
-          B1: false,
-          B2: false,
-          B3: false,
-        },
-      },
-      perm: {
-        W3: {
-          B2: false,
-        },
-        W4: {
-          B1: false,
-          B2: false,
-          B3: false,
-          B4: false,
-        },
-        W5: {
-          B1: false,
-          B4: false,
-        },
-        W6: {
-          B1: false,
-          B2: false,
-          B3: false,
-        },
-        W7: {
-          B1: false,
-          B2: false,
-          B3: false,
-        },
-      },
-    };
-  }
-}
