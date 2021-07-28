@@ -1,22 +1,10 @@
 import { Handler } from "@netlify/functions";
-import Firebase from "firebase/app";
-import "firebase/firestore";
+import { Client, query as q } from "faunadb";
 import fetch from "node-fetch";
-
-const app = Firebase.initializeApp({
-  apiKey: process.env.FIRESTORE_API_KEY,
-  authDomain: process.env.FIRESTORE_AUTH_DOMAIN,
-  projectId: process.env.FIRESTORE_PROJECT_ID,
-  storageBucket: process.env.FIRESTORE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIRESTORE_MESSAGING_SENDER_ID,
-  appId: process.env.FIRESTORE_APP_ID,
-});
 
 type Response = Exclude<ReturnType<Handler>, void>;
 
 const handler: Handler = async (event, context) => {
-  context.callbackWaitsForEmptyEventLoop = false;
-
   const params = event.path.replace("/.netlify/functions/team", "").split("/");
 
   switch (event.httpMethod) {
@@ -24,11 +12,13 @@ const handler: Handler = async (event, context) => {
       if (params.length !== 2) return;
       return dbRun(async (client) => {
         const team = (
-          await client.collection("teams").doc(params[1]).get()
-        ).data();
+          (await client.query(
+            q.Get(q.Ref(q.Collection("teams"), params[1]))
+          )) as any
+        ).data;
 
         const players: Array<{ name: string; apiKey: string; id: string }> =
-          team.players.map((p) => JSON.parse(p));
+          team.players;
 
         const playerData = await Promise.all(players.map(requestPlayerStatus));
 
@@ -48,17 +38,16 @@ const handler: Handler = async (event, context) => {
           return undefined;
         }
         return dbRun(async (client) => {
-          const team = await client.collection("teams").add({
-            name,
-            players: [],
-          });
+          const team = await client.query(
+            q.Create("teams", { data: { name, players: [] } })
+          );
 
           return {
             statusCode: 200,
             body: JSON.stringify({
               name,
               players: [],
-              id: team.id,
+              id: (team as any).ref.id,
             }),
           };
         });
@@ -69,21 +58,30 @@ const handler: Handler = async (event, context) => {
           return undefined;
         }
         return dbRun(async (client) => {
-          const team = client.collection("teams").doc(params[1]);
-          const existingPlayers = (await team.get()).data().players;
+          const team = (
+            (await client.query(
+              q.Get(q.Ref(q.Collection("teams"), params[1]))
+            )) as any
+          ).data;
+          const existingPlayers = team.players;
 
           const id = existingPlayers.length
-            ? (JSON.parse(existingPlayers[existingPlayers.length - 1]).id ||
-                0) + 1
+            ? (existingPlayers[existingPlayers.length - 1].id || 0) + 1
             : 0;
           const player = {
             id,
             name,
             apiKey,
           };
-          team.set({
-            players: [...existingPlayers, JSON.stringify(player)],
-          });
+          const players = [...existingPlayers, player];
+
+          await client.query(
+            q.Update(q.Ref(q.Collection("teams"), params[1]), {
+              data: {
+                players,
+              },
+            })
+          );
 
           return {
             statusCode: 200,
@@ -93,53 +91,29 @@ const handler: Handler = async (event, context) => {
       } else {
         return;
       }
-    case "PUT":
-      if (params.length !== 3) {
-        return;
-      }
-      return dbRun(async (client) => {
-        const team = client.collection("teams").doc(params[1]);
-        const existingPlayers = (await team.get())
-          .data()
-          .players.map((p) => JSON.parse(p));
-
-        const index = existingPlayers.findIndex(
-          (p) => p.id === Number(params[2])
-        );
-
-        const name: string = JSON.parse(event.body).name;
-        if (!name || index < 0) {
-          return;
-        }
-
-        existingPlayers[index] = {
-          ...existingPlayers[index],
-          name,
-        };
-
-        team.set({
-          players: existingPlayers.map((p) => JSON.stringify(p)),
-        });
-
-        return {
-          statusCode: 200,
-        };
-      });
     case "DELETE":
       if (params.length !== 3) {
         return;
       }
       return dbRun(async (client) => {
-        const team = client.collection("teams").doc(params[1]);
-        const existingPlayers = (await team.get())
-          .data()
-          .players.map((p) => JSON.parse(p));
+        const team = (
+          (await client.query(
+            q.Get(q.Ref(q.Collection("teams"), params[1]))
+          )) as any
+        ).data;
+        const existingPlayers = team.players;
 
-        team.set({
-          players: existingPlayers
-            .filter((p) => p.id !== Number(params[2]))
-            .map((p) => JSON.stringify(p)),
-        });
+        const players = existingPlayers.filter(
+          (p) => p.id !== Number(params[2])
+        );
+
+        await client.query(
+          q.Update(q.Ref(q.Collection("teams"), params[1]), {
+            data: {
+              players,
+            },
+          })
+        );
 
         return {
           statusCode: 200,
@@ -153,24 +127,23 @@ const handler: Handler = async (event, context) => {
   };
 };
 
-async function dbRun(
-  handler: (client: Firebase.firestore.Firestore) => Promise<Response>
-) {
-  if (!process.env.FIRESTORE_API_KEY) {
-    throw new Error("Missing Firestore key");
+async function dbRun(handler: (client: Client) => Promise<Response>) {
+  if (!process.env.FAUNA_KEY) {
+    throw new Error("Missing Fauna key");
   }
 
-  const firestore = app.firestore();
+  const client = new Client({
+    secret: process.env.FAUNA_KEY,
+    domain: process.env.FAUNA_DOMAIN,
+  });
 
   try {
-    return await handler(firestore);
+    return await handler(client);
   } catch (ex) {
     console.log(ex);
     throw ex;
   } finally {
-    await firestore.waitForPendingWrites();
-    await firestore.terminate();
-    await firestore.clearPersistence();
+    client.close();
   }
 }
 

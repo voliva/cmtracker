@@ -133,7 +133,10 @@ export const [usePlayerIds] = bind(
 
 export const [usePlayerInfo] = bind((id: string) =>
   combineLatest({
-    info: teamInfo$.pipe(map((info) => info.players.find((p) => p.id === id)!)),
+    info: teamInfo$.pipe(
+      map((info) => info.players.find((p) => p.id === id)!),
+      filter((v) => !!v)
+    ),
     markStatus: combineLatest({
       marked: markedPlayer$,
       filter: filter$,
