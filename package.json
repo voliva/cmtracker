@@ -24,7 +24,8 @@
     "start": "craco start",
     "build": "craco build",
     "test": "craco test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "serverless": "ts-node-transpile-only ./serverless.ts"
   },
   "eslintConfig": {
     "extends": [
@@ -47,10 +48,14 @@
   "devDependencies": {
     "@craco/craco": "^6.2.0",
     "@netlify/functions": "^0.7.2",
+    "@types/koa": "^2.13.4",
     "@types/react-router-dom": "^5.1.8",
     "autoprefixer": "^9",
+    "dotenv": "^10.0.0",
+    "koa": "^2.13.1",
     "node-fetch": "^2.6.1",
     "postcss": "^7",
-    "tailwindcss": "npm:@tailwindcss/postcss7-compat"
+    "tailwindcss": "npm:@tailwindcss/postcss7-compat",
+    "ts-node": "^10.1.0"
   }
 }
