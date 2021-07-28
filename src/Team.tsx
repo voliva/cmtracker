@@ -1,129 +1,133 @@
 // import { useRouteMatch } from "react-router-dom";
 
+import { Subscribe } from "@react-rxjs/core";
+import { FC } from "react";
+import {
+  setFilter,
+  setPlayerMarked,
+  toggleStatusType,
+  useFilter,
+  usePlayerIds,
+  usePlayerInfo,
+  useStatusTypes,
+} from "./team.state";
+
 export function Team() {
-  // const { params } = useRouteMatch<{ id: string }>();
-  // const { id } = params;
   return (
-    <div className="flex flex-col gap-4">
-      <Filter />
-      <ResultsTable />
-      <AddPlayer />
-    </div>
+    <Subscribe fallback="Loading">
+      <div className="flex flex-col gap-4">
+        <Filter />
+        <ResultsTable />
+        <AddPlayer />
+      </div>
+    </Subscribe>
   );
 }
 
 /// Filter
 const Filter = () => {
+  const filter = useFilter();
+  const statusTypes = useStatusTypes();
+
   return (
     <div className="flex">
-      <input className="flex-grow" type="Text" placeholder="Filter by name" />
+      <input
+        className="flex-grow"
+        type="Text"
+        placeholder="Filter by name"
+        value={filter}
+        onChange={(evt) => setFilter(evt.target.value)}
+      />
       <div className="flex-grow-0 flex-shrink-0 button-group">
-        <button>Normal</button>
-        <button>Weekly CM</button>
-        <button>Perm CM</button>
+        <button
+          className={statusTypes.normal ? "bg-green-100" : "bg-yellow-100"}
+          onClick={() => toggleStatusType("normal")}
+        >
+          Normal
+        </button>
+        <button
+          className={statusTypes.weekly ? "bg-green-100" : "bg-yellow-100"}
+          onClick={() => toggleStatusType("weekly")}
+        >
+          Weekly CM
+        </button>
+        <button
+          className={statusTypes.perm ? "bg-green-100" : "bg-yellow-100"}
+          onClick={() => toggleStatusType("perm")}
+        >
+          Perm CM
+        </button>
       </div>
     </div>
   );
 };
 
 /// Results Table
-const ResultsTable = () => (
-  <div className="overflow-auto flex">
-    <table className="table-auto table-results">
-      <thead>
-        <tr>
-          <th></th>
-          <th colSpan={4}>W1</th>
-          <th colSpan={3}>W2</th>
-          <th colSpan={4}>W3</th>
-          <th colSpan={4}>W4</th>
-          <th colSpan={4}>W5</th>
-          <th colSpan={3}>W6</th>
-          <th colSpan={4}>W7</th>
-        </tr>
-        <tr>
-          <th>Player</th>
-          {/* W1 */}
-          <th>B1</th>
-          <th>E1</th>
-          <th>B2</th>
-          <th>B3</th>
-          {/* W2 */}
-          <th>B1</th>
-          <th>B2</th>
-          <th>B3</th>
-          {/* W3 */}
-          <th>B1</th>
-          <th>B2</th>
-          <th>E1</th>
-          <th>B3</th>
-          {/* W4 */}
-          <th>B1</th>
-          <th>B2</th>
-          <th>B3</th>
-          <th>B4</th>
-          {/* W5 */}
-          <th>B1</th>
-          <th>B2</th>
-          <th>B3</th>
-          <th>B4</th>
-          {/* W6 */}
-          <th>B1</th>
-          <th>B2</th>
-          <th>B3</th>
-          {/* W7 */}
-          <th>E1</th>
-          <th>B1</th>
-          <th>B2</th>
-          <th>B3</th>
-        </tr>
-      </thead>
-      <tbody>
-        <PlayerResults />
-      </tbody>
-    </table>
-  </div>
-);
+const ResultsTable = () => {
+  const ids = usePlayerIds();
 
-const PlayerResults = () => {
   return (
-    <tr>
-      <td>Oli</td>
-      {/* W1 */}
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      {/* W2 */}
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      {/* W3 */}
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      {/* W4 */}
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      {/* W5 */}
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      {/* W6 */}
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      {/* W7 */}
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      <td>0 1 0</td>
-      <td>0 1 0</td>
+    <div className="overflow-auto flex">
+      <table className="table-auto table-results">
+        <thead>
+          <tr>
+            <th></th>
+            {wings.map(({ wing, raids }) => (
+              <th key={wing} colSpan={raids.length}>
+                {wing}
+              </th>
+            ))}
+          </tr>
+          <tr>
+            <th>Player</th>
+            {raids.map(({ wing, raid }) => (
+              <th key={wing + raid}>{raid}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {ids.map((id) => (
+            <PlayerResults key={id} id={id} />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const PlayerResults: FC<{ id: string }> = ({ id }) => {
+  const { info, markStatus } = usePlayerInfo(id);
+  const statusTypes = useStatusTypes();
+  const { name, normal, weekly, perm } = info;
+
+  const isMarked = markStatus === "marked";
+
+  return (
+    <tr className={markStatus === "greyedout" ? "opacity-50" : ""}>
+      <td>
+        <input
+          type="checkbox"
+          checked={isMarked}
+          onChange={(evt) => setPlayerMarked(id, evt.target.checked)}
+        />
+        {name}
+      </td>
+      {raids.map(({ wing, raid }) => (
+        <td key={wing + raid} className="text-center">
+          {statusTypes.normal && renderStatus(normal[wing]?.[raid])}
+          {statusTypes.weekly && renderStatus(weekly[wing]?.[raid])}
+          {statusTypes.perm && renderStatus(perm[wing]?.[raid])}
+        </td>
+      ))}
     </tr>
   );
+};
+
+const renderStatus = (status: boolean | undefined) => {
+  if (status === undefined) {
+    return "-";
+  }
+  return status ? 1 : 0;
 };
 
 /// Add Player
@@ -136,3 +140,23 @@ const AddPlayer = () => {
     </form>
   );
 };
+
+const raidStructure: Record<string, Array<string>> = {
+  W1: ["B1", "E1", "B2", "B3"],
+  W2: ["B1", "B2", "B3"],
+  W3: ["B1", "B2", "E1", "B3"],
+  W4: ["B1", "B2", "B3", "B4"],
+  W5: ["B1", "B2", "B3", "B4"],
+  W6: ["B1", "B2", "B3"],
+  W7: ["E1", "B1", "B2", "B3"],
+};
+const wings = Object.keys(raidStructure).map((w) => ({
+  wing: w,
+  raids: raidStructure[w],
+}));
+const raids = wings.flatMap(({ wing: w, raids }) =>
+  raids.map((r) => ({
+    wing: w,
+    raid: r,
+  }))
+);
