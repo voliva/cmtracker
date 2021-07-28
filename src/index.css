@@ -11,7 +11,46 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+@layer base {
+  h1 {
+    @apply text-2xl;
+  }
+  input {
+    @apply py-1 px-2 rounded border;
+  }
+  button {
+    @apply py-1 px-2 rounded border bg-gray-100;
+  }
+}
+
+@layer components {
+  .table-results {
+    /* Need border-collapse separate for position: sticky to play nicely*/
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .table-results td,
+  .table-results th {
+    @apply py-1 px-2 bg-gray-50 border;
+
+    white-space: nowrap;
+  }
+
+  .table-results td:first-child,
+  .table-results th:first-child {
+    position: sticky;
+    left: 0;
+  }
+}
+
+@layer components {
+  .button-group button {
+    @apply rounded-none;
+  }
+  .button-group button:first-child {
+    @apply rounded-l-lg;
+  }
+  .button-group button:last-child {
+    @apply rounded-r-lg;
+  }
 }
