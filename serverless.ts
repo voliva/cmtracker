@@ -1,7 +1,6 @@
 import { Handler } from "@netlify/functions";
 import Koa from "koa";
 import dotenv from "dotenv";
-import "./netlify/functions/team";
 
 dotenv.config({
   path: ".env.local",
