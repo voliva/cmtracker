@@ -6,6 +6,7 @@ import {
   setPlayerMarked,
   toggleStatusType,
   triggerRefresh,
+  useDateRefreshed,
   useFilter,
   useIsDeleteEnabled,
   usePlayerIds,
@@ -18,12 +19,14 @@ import checked from "../assets/checked.svg";
 import neutral from "../assets/neutral.svg";
 import cross from "../assets/cross.svg";
 import { Card } from "../components/Card";
+import { format } from "timeago.js";
 
 export function Team() {
   return (
     <Subscribe fallback="Loading">
       <div className="flex flex-col gap-4">
         <Title />
+        <Refresh />
         <Filter />
         <ResultsTable />
         <AddPlayer />
@@ -40,6 +43,30 @@ const Title = () => {
       <h2>Team: {name}</h2>
       <p>Share this URL with your team so that they can add their accounts.</p>
     </Card>
+  );
+};
+
+const Refresh = () => {
+  const teamId = useRouteMatch<{ id: string }>().params.id;
+  const refreshDate = useDateRefreshed();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const refresh = async () => {
+    if (isRefreshing) return;
+
+    setIsRefreshing(true);
+    await fetch(process.env.REACT_APP_SERVER_ROOT + "/refresh/" + teamId, {
+      method: "POST",
+    });
+    setIsRefreshing(false);
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <button onClick={refresh}>
+        {isRefreshing ? "Refreshing..." : "Refresh"}
+      </button>
+      <div>Last refresh: {format(refreshDate)}</div>
+    </div>
   );
 };
 
@@ -123,6 +150,7 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleDelete = async () => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     await fetch(process.env.REACT_APP_SERVER_ROOT + `/team/${teamId}/${id}`, {
       method: "DELETE",
@@ -185,6 +213,7 @@ const AddPlayer = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleSubmit = async (evt: FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
+    if (isSubmitting) return;
     const form = evt.currentTarget;
     const data = new FormData(form);
     const name = data.get("name");

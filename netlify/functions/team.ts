@@ -1,6 +1,7 @@
 import { Handler } from "@netlify/functions";
 import { query as q } from "faunadb";
-import { createTeam, dbRun, getTeamById } from "./faunadb";
+import { createTeam, dbRun, getTeamById, Player } from "./faunadb";
+import { requestPlayerStatus } from "./gw2API";
 
 export const handler: Handler = async (event) => {
   const params = event.path.replace("/.netlify/functions/team", "").split("/");
@@ -17,6 +18,7 @@ export const handler: Handler = async (event) => {
           statusCode: 200,
           body: JSON.stringify({
             name: team.name,
+            refreshed: team.refreshed,
             players: players,
           }),
         };
@@ -47,13 +49,24 @@ export const handler: Handler = async (event) => {
           return undefined;
         }
         return dbRun(async (client) => {
+          // TODO verify apiKey is valid
           const team = await getTeamById(client, params[1]);
           const existingPlayers = team.data.players;
+          if (existingPlayers.some((player) => player.apiKey === apiKey)) {
+            return {
+              statusCode: 400,
+              body: JSON.stringify({
+                error: "provided apiKey already exists",
+              }),
+            };
+          }
 
           const id = existingPlayers.length
             ? (existingPlayers[existingPlayers.length - 1].id || 0) + 1
             : 0;
-          const player = {
+          const status = await requestPlayerStatus({ id, apiKey });
+          const player: Player = {
+            ...status,
             id,
             name,
             apiKey,

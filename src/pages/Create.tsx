@@ -6,6 +6,7 @@ export function Create() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleSubmit = async (evt: FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
+    if (isSubmitting) return;
     const data = new FormData(evt.currentTarget);
     const name = data.get("name");
     if (typeof name !== "string") {

@@ -17,6 +17,7 @@ import { history$ } from "../history";
 interface TeamInfo {
   name: string;
   players: PlayerInfo[];
+  refreshed: number;
 }
 interface PlayerInfo {
   id: string;
@@ -101,6 +102,9 @@ const teamInfo$ = infoRefresh$.pipe(
 );
 
 export const [useTeamName] = bind(teamInfo$.pipe(map((t) => t.name)));
+export const [useDateRefreshed] = bind(
+  teamInfo$.pipe(map((t) => new Date(t.refreshed)))
+);
 
 export const [usePlayerIds] = bind(
   combineLatest({

@@ -59,7 +59,6 @@ export function getAllTeams(client: Client) {
 }
 
 export function createTeam(client: Client, name: string) {
-  return client.query<FResult<Team>>(
-    q.Create("teams", { data: { name, players: [], refreshed: Date.now() } })
-  );
+  const team: Team = { name, players: [], refreshed: Date.now() };
+  return client.query<FResult<Team>>(q.Create("teams", { data: team }));
 }

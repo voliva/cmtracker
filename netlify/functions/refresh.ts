@@ -9,7 +9,7 @@ export const handler: Handler = async (event) => {
     .split("/");
 
   switch (event.httpMethod) {
-    case "GET":
+    case "POST":
       if (params.length > 2) return; // Has one optional parameter
       return dbRun(async (client) => {
         if (params.length === 1) {
