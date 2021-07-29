@@ -20,6 +20,7 @@ import neutral from "../assets/neutral.svg";
 import cross from "../assets/cross.svg";
 import { Card } from "../components/Card";
 import { format } from "timeago.js";
+import { useEffect } from "react";
 
 export function Team() {
   return (
@@ -49,6 +50,7 @@ const Title = () => {
 const Refresh = () => {
   const teamId = useRouteMatch<{ id: string }>().params.id;
   const refreshDate = useDateRefreshed();
+  useRerenderEveryTimediff(refreshDate);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const refresh = async () => {
     if (isRefreshing) return;
@@ -69,6 +71,27 @@ const Refresh = () => {
       <div>Last refresh: {format(refreshDate)}</div>
     </div>
   );
+};
+
+const SECOND = 1_000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+const timeMap = [
+  // [x,y] => If it's less than x, then wait y for rerender
+  [MINUTE, SECOND],
+  [HOUR, MINUTE],
+  [DAY, HOUR],
+  [Number.POSITIVE_INFINITY, DAY],
+];
+const useRerenderEveryTimediff = (date: Date) => {
+  const [, forceUpdate] = useState(false);
+  useEffect(() => {
+    const timediff = Date.now() - date.getTime();
+    const timeout = timeMap.find(([max]) => timediff < max)![1];
+    const token = setTimeout(() => forceUpdate((v) => !v), timeout);
+    return () => clearTimeout(token);
+  });
 };
 
 /// Filter

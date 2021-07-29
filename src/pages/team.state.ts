@@ -6,8 +6,10 @@ import {
   defer,
   distinctUntilChanged,
   filter,
+  interval,
   map,
   mapTo,
+  merge,
   scan,
   startWith,
   switchMap,
@@ -86,7 +88,7 @@ const markedPlayer$ = defer(() =>
   )
 );
 
-const teamInfo$ = infoRefresh$.pipe(
+const teamInfo$ = merge(infoRefresh$, interval(5 * 60 * 1000)).pipe(
   startWith(null),
   switchMap(() =>
     history$.pipe(
