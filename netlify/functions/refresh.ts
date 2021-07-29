@@ -1,6 +1,6 @@
 import { Handler } from "@netlify/functions";
 import { Client, query as q } from "faunadb";
-import { dbRun, getAllTeams, getTeamById, Team } from "./faunadb";
+import { dbRun, getTeamById, Team } from "./faunadb";
 import { requestPlayerStatus } from "./gw2API";
 
 export const handler: Handler = async (event) => {
@@ -10,18 +10,10 @@ export const handler: Handler = async (event) => {
 
   switch (event.httpMethod) {
     case "POST":
-      if (params.length > 2) return; // Has one optional parameter
+      if (params.length !== 2) return;
       return dbRun(async (client) => {
-        if (params.length === 1) {
-          const teams = await getAllTeams(client);
-
-          await Promise.all(
-            teams.map((team) => refreshTeam(client, team.ref.id, team.data))
-          );
-        } else {
-          const team = await getTeamById(client, params[1]);
-          await refreshTeam(client, team.ref.id, team.data);
-        }
+        const team = await getTeamById(client, params[1]);
+        await refreshTeam(client, team.ref.id, team.data);
 
         return {
           statusCode: 200,
