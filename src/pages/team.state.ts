@@ -103,7 +103,7 @@ const markedPlayer$ = defer(() =>
   )
 );
 
-const teamInfo$ = merge(infoRefresh$, interval(5 * 60 * 1000)).pipe(
+const teamInfo$ = merge(infoRefresh$, interval(30 * 60 * 1000)).pipe(
   startWith(null),
   switchMap(() =>
     history$.pipe(
@@ -121,6 +121,9 @@ const teamInfo$ = merge(infoRefresh$, interval(5 * 60 * 1000)).pipe(
 export const [useTeamName] = bind(teamInfo$.pipe(map((t) => t.name)));
 export const [useDateRefreshed] = bind(
   teamInfo$.pipe(map((t) => new Date(t.refreshed)))
+);
+export const [usePlayerCount] = bind(
+  teamInfo$.pipe(map((t) => t.players.length))
 );
 
 export const [usePlayerIds] = bind(

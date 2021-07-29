@@ -1,6 +1,6 @@
 import { Handler } from "@netlify/functions";
 import { query as q } from "faunadb";
-import { createTeam, dbRun, getTeamById, Player } from "./faunadb";
+import { countTeams, createTeam, dbRun, getTeamById, Player } from "./faunadb";
 import { requestPlayerStatus } from "./gw2API";
 
 export const handler: Handler = async (event) => {
@@ -31,6 +31,18 @@ export const handler: Handler = async (event) => {
           return undefined;
         }
         return dbRun(async (client) => {
+          if (process.env.TEAM_LIMIT) {
+            const teamCount = await countTeams(client);
+            if (teamCount >= Number(process.env.TEAM_LIMIT)) {
+              return {
+                statusCode: 400,
+                body: JSON.stringify({
+                  error: "No more teams are allowed in this server",
+                }),
+              };
+            }
+          }
+
           const team = await createTeam(client, name);
 
           return {
@@ -52,11 +64,26 @@ export const handler: Handler = async (event) => {
           // TODO verify apiKey is valid
           const team = await getTeamById(client, params[1]);
           const existingPlayers = team.data.players;
+
+          if (process.env.REACT_APP_PLAYER_LIMIT) {
+            if (
+              existingPlayers.length >=
+              Number(process.env.REACT_APP_PLAYER_LIMIT)
+            ) {
+              return {
+                statusCode: 400,
+                body: JSON.stringify({
+                  error: "Player limit reached for this team",
+                }),
+              };
+            }
+          }
+
           if (existingPlayers.some((player) => player.apiKey === apiKey)) {
             return {
               statusCode: 400,
               body: JSON.stringify({
-                error: "provided apiKey already exists",
+                error: "Provided apiKey already exists",
               }),
             };
           }

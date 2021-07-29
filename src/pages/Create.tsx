@@ -24,7 +24,9 @@ export function Create() {
       history.push("/" + result.id);
     } else {
       alert(
-        "Woops - something is not working. Check again another day, sorry!"
+        result.error
+          ? result.error
+          : "Woops - something is not working. Check again another day, sorry!"
       );
     }
   };

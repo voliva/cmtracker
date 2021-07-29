@@ -62,3 +62,7 @@ export function createTeam(client: Client, name: string) {
   const team: Team = { name, players: [], refreshed: Date.now() };
   return client.query<FResult<Team>>(q.Create("teams", { data: team }));
 }
+
+export function countTeams(client: Client) {
+  return client.query<number>(q.Count(q.Documents(q.Collection("teams"))));
+}

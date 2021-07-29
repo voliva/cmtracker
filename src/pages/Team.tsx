@@ -9,6 +9,7 @@ import {
   useDateRefreshed,
   useFilter,
   useIsDeleteEnabled,
+  usePlayerCount,
   usePlayerIds,
   usePlayerInfo,
   useStatusTypes,
@@ -247,8 +248,8 @@ const getStatusSrc = (status: boolean | undefined) => {
   return status ? checked : cross;
 };
 
-/// Add Player
 const AddPlayer = () => {
+  const count = usePlayerCount();
   const teamId = useRouteMatch<{ id: string }>().params.id;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleSubmit = async (evt: FormEvent<HTMLFormElement>) => {
@@ -277,10 +278,18 @@ const AddPlayer = () => {
       form.reset();
     } else {
       alert(
-        "Woops - something is not working. Check again another day, sorry!"
+        result.error
+          ? result.error
+          : "Woops - something is not working. Check again another day, sorry!"
       );
     }
   };
+
+  if (process.env.REACT_APP_PLAYER_LIMIT) {
+    if (count >= Number(process.env.REACT_APP_PLAYER_LIMIT)) {
+      return null;
+    }
+  }
 
   return (
     <form
