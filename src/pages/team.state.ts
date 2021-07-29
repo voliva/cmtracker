@@ -13,6 +13,7 @@ import {
   scan,
   startWith,
   switchMap,
+  tap,
 } from "rxjs";
 import { history$ } from "../history";
 
@@ -44,12 +45,26 @@ export const [useFilter, filter$] = bind(filterChange$, "");
 export const [statusTypeChange$, toggleStatusType] = createSignal<
   "normal" | "perm"
 >();
+const initialPreference = (() => {
+  const v = localStorage.getItem("statusType");
+  if (v === null) {
+    return "normal";
+  }
+  if (v === "null") {
+    return null;
+  }
+  return v;
+})();
+
 const selectedStatusType$ = statusTypeChange$.pipe(
   scan(
     (acc, type) => (acc === type ? null : type),
-    null as "normal" | "perm" | null
+    initialPreference as "normal" | "perm" | null
   ),
-  startWith(null)
+  tap((v) => {
+    localStorage.setItem("statusType", String(v));
+  }),
+  startWith(initialPreference)
 );
 
 export const [useStatusTypes] = bind(
