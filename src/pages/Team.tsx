@@ -196,8 +196,8 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
   };
 
   return (
-    <tr className={markStatus === "greyedout" ? "opacity-50" : ""}>
-      <td>
+    <tr>
+      <td className="z-10">
         <div className="flex items-center pr-5 gap-1">
           <input
             type="checkbox"
@@ -220,7 +220,7 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
           key={wing + raid}
           className={`text-center ${start ? "wing-start" : ""} ${
             end ? "wing-end" : ""
-          }`}
+          } ${markStatus === "greyedout" ? "opacity-50" : ""}`}
         >
           <div className="flex w-10 justify-center gap-1">
             {statusTypes.normal && renderStatus(normal[wing]?.[raid])}
