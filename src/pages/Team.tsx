@@ -141,15 +141,26 @@ const ResultsTable = () => {
           <tr>
             <th></th>
             {wings.map(({ wing, raids }) => (
-              <th key={wing} colSpan={raids.length}>
+              <th
+                key={wing}
+                colSpan={raids.length}
+                className="wing-start wing-end"
+              >
                 {wing}
               </th>
             ))}
           </tr>
           <tr>
             <th>Player</th>
-            {raids.map(({ wing, raid }) => (
-              <th key={wing + raid}>{raid}</th>
+            {raids.map(({ wing, raid, start, end }) => (
+              <th
+                key={wing + raid}
+                className={`${start ? "wing-start" : ""} ${
+                  end ? "wing-end" : ""
+                }`}
+              >
+                {raid}
+              </th>
             ))}
           </tr>
         </thead>
@@ -204,8 +215,13 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
           )}
         </div>
       </td>
-      {raids.map(({ wing, raid }) => (
-        <td key={wing + raid} className="text-center">
+      {raids.map(({ wing, raid, start, end }) => (
+        <td
+          key={wing + raid}
+          className={`text-center ${start ? "wing-start" : ""} ${
+            end ? "wing-end" : ""
+          }`}
+        >
           <div className="flex w-10 justify-center gap-1">
             {statusTypes.normal && renderStatus(normal[wing]?.[raid])}
             {statusTypes.perm && renderStatus(perm[wing]?.[raid])}
@@ -302,7 +318,9 @@ const wings = Object.keys(raidStructure).map((w) => ({
   raids: raidStructure[w],
 }));
 const raids = wings.flatMap(({ wing: w, raids }) =>
-  raids.map((r) => ({
+  raids.map((r, i) => ({
+    start: i === 0,
+    end: i === raids.length - 1,
     wing: w,
     raid: r,
   }))

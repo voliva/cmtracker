@@ -43,6 +43,14 @@ body {
   .table-results th:first-child {
     position: sticky;
     left: 0;
+    border-right-color: #333;
+  }
+
+  .table-results .wing-start {
+    border-left-color: #333;
+  }
+  .table-results .wing-end {
+    border-right-color: #333;
   }
 }
 
