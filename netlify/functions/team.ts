@@ -1,32 +1,23 @@
 import { Handler } from "@netlify/functions";
-import { Client, query as q } from "faunadb";
-import fetch from "node-fetch";
+import { query as q } from "faunadb";
+import { createTeam, dbRun, getTeamById } from "./faunadb";
 
-type Response = Exclude<ReturnType<Handler>, void>;
-
-const handler: Handler = async (event, context) => {
+export const handler: Handler = async (event) => {
   const params = event.path.replace("/.netlify/functions/team", "").split("/");
 
   switch (event.httpMethod) {
     case "GET":
       if (params.length !== 2) return;
       return dbRun(async (client) => {
-        const team = (
-          (await client.query(
-            q.Get(q.Ref(q.Collection("teams"), params[1]))
-          )) as any
-        ).data;
+        const team = (await getTeamById(client, params[1])).data;
 
-        const players: Array<{ name: string; apiKey: string; id: string }> =
-          team.players;
-
-        const playerData = await Promise.all(players.map(requestPlayerStatus));
+        const players = team.players.map(({ apiKey: _, ...rest }) => rest);
 
         return {
           statusCode: 200,
           body: JSON.stringify({
             name: team.name,
-            players: playerData,
+            players: players,
           }),
         };
       });
@@ -38,16 +29,14 @@ const handler: Handler = async (event, context) => {
           return undefined;
         }
         return dbRun(async (client) => {
-          const team = await client.query(
-            q.Create("teams", { data: { name, players: [] } })
-          );
+          const team = await createTeam(client, name);
 
           return {
             statusCode: 200,
             body: JSON.stringify({
               name,
               players: [],
-              id: (team as any).ref.id,
+              id: team.ref.id,
             }),
           };
         });
@@ -58,12 +47,8 @@ const handler: Handler = async (event, context) => {
           return undefined;
         }
         return dbRun(async (client) => {
-          const team = (
-            (await client.query(
-              q.Get(q.Ref(q.Collection("teams"), params[1]))
-            )) as any
-          ).data;
-          const existingPlayers = team.players;
+          const team = await getTeamById(client, params[1]);
+          const existingPlayers = team.data.players;
 
           const id = existingPlayers.length
             ? (existingPlayers[existingPlayers.length - 1].id || 0) + 1
@@ -96,14 +81,9 @@ const handler: Handler = async (event, context) => {
         return;
       }
       return dbRun(async (client) => {
-        const team = (
-          (await client.query(
-            q.Get(q.Ref(q.Collection("teams"), params[1]))
-          )) as any
-        ).data;
-        const existingPlayers = team.players;
+        const team = await getTeamById(client, params[1]);
 
-        const players = existingPlayers.filter(
+        const players = team.data.players.filter(
           (p) => p.id !== Number(params[2])
         );
 
@@ -122,243 +102,6 @@ const handler: Handler = async (event, context) => {
   }
 
   return {
-    statusCode: 200,
-    body: JSON.stringify({ message: "Hello!" }),
+    statusCode: 404,
   };
 };
-
-async function dbRun(handler: (client: Client) => Promise<Response>) {
-  if (!process.env.FAUNA_KEY) {
-    throw new Error("Missing Fauna key");
-  }
-
-  const client = new Client({
-    secret: process.env.FAUNA_KEY,
-    domain: process.env.FAUNA_DOMAIN,
-  });
-
-  try {
-    return await handler(client);
-  } catch (ex) {
-    console.log(ex);
-    throw ex;
-  } finally {
-    client.close();
-  }
-}
-
-/*
-Weekly CM 5455 // => Doesn't exist
-*/
-
-type Status = Record<string, Record<string, boolean>>;
-interface Statuses {
-  normal: Status;
-  // weekly: Status,
-  perm: Status;
-}
-
-const achievementMap: Record<number, (status: Statuses) => void> = {
-  // W3 B2 Down, Down, Downed
-  3019: setFlag("perm", "W3", "B2"),
-  // W4 B1 Jaded
-  3334: setFlag("perm", "W4", "B1"),
-  // W4 B2 Attuned
-  3287: setFlag("perm", "W4", "B2"),
-  // W4 B3 Harsh Sentence
-  3342: setFlag("perm", "W4", "B3"),
-  // W4 B4 Solitary Confinement
-  3292: setFlag("perm", "W4", "B4"),
-  // W5 B1 Exile Executioner
-  3993: setFlag("perm", "W5", "B1"),
-  // W5 B4 Death Eater
-  3979: setFlag("perm", "W5", "B4"),
-  // W6 B1 Some Dissasembly Required
-  4416: setFlag("perm", "W6", "B1"),
-  // W6 B2 Let's Not Do That Again
-  4429: setFlag("perm", "W6", "B2"),
-  // W6 B3 Heroes of the Forge
-  4355: setFlag("perm", "W6", "B3"),
-  // W7 B1 Rock Solid
-  4803: setFlag("perm", "W7", "B1"),
-  // W7 B2 Quell the Storm
-  4779: setFlag("perm", "W7", "B2"),
-  // W7 B3 Mad with Power
-  4800: setFlag("perm", "W7", "B3"),
-};
-const progressionMap: Record<string, (status: Statuses) => void> = {
-  vale_guardian: setFlag("normal", "W1", "B1"),
-  spirit_woods: setFlag("normal", "W1", "E1"),
-  gorseval: setFlag("normal", "W1", "B2"),
-  sabetha: setFlag("normal", "W1", "B3"),
-  slothasor: setFlag("normal", "W2", "B1"),
-  bandit_trio: setFlag("normal", "W2", "B2"),
-  matthias: setFlag("normal", "W2", "B3"),
-  escort: setFlag("normal", "W3", "B1"),
-  keep_construct: setFlag("normal", "W3", "B2"),
-  twisted_castle: setFlag("normal", "W3", "E1"),
-  xera: setFlag("normal", "W3", "B3"),
-  cairn: setFlag("normal", "W4", "B1"),
-  mursaat_overseer: setFlag("normal", "W4", "B2"),
-  samarog: setFlag("normal", "W4", "B3"),
-  deimos: setFlag("normal", "W4", "B4"),
-  soulless_horror: setFlag("normal", "W5", "B1"),
-  river_of_souls: setFlag("normal", "W5", "B2"),
-  statues_of_grenth: setFlag("normal", "W5", "B3"),
-  voice_in_the_void: setFlag("normal", "W5", "B4"),
-  conjured_amalgamate: setFlag("normal", "W6", "B1"),
-  twin_largos: setFlag("normal", "W6", "B2"),
-  qadim: setFlag("normal", "W6", "B3"),
-  gate: setFlag("normal", "W7", "E1"),
-  adina: setFlag("normal", "W7", "B1"),
-  sabir: setFlag("normal", "W7", "B2"),
-  qadim_the_peerless: setFlag("normal", "W7", "B3"),
-};
-
-const ids = Object.keys(achievementMap);
-interface AccountAchievement {
-  id: number;
-  done: boolean;
-  bits?: number[];
-}
-async function requestPlayerStatus({
-  id,
-  apiKey,
-  name,
-}: {
-  id: string;
-  apiKey: string;
-  name: string;
-}) {
-  const achievementsP = fetch(
-    `https://api.guildwars2.com/v2/account/achievements?ids=${ids.join(",")}`,
-    {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-    }
-  )
-    .then((result) => result.json())
-    .then((result): AccountAchievement[] => {
-      if (!Array.isArray(result)) {
-        return [];
-      }
-      return result;
-    })
-    .catch((err) => {
-      console.error(err);
-      return [] as AccountAchievement[];
-    });
-
-  const weeklyP = fetch("https://api.guildwars2.com/v2/account/raids", {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
-  })
-    .then((result) => result.json())
-    .then((result): string[] => {
-      if (!Array.isArray(result)) {
-        return [];
-      }
-      return result;
-    })
-    .catch((err) => {
-      console.error(err);
-      return [] as string[];
-    });
-
-  const [achievements, progression] = await Promise.all([
-    achievementsP,
-    weeklyP,
-  ]);
-
-  const statuses: Statuses = {
-    normal: createStatus(),
-    perm: createCMStatus(),
-  };
-
-  achievements.forEach((a) => achievementMap[a.id](statuses));
-  progression.forEach((p) => progressionMap[p](statuses));
-
-  return { id, name, ...statuses };
-}
-
-export { handler };
-
-function createStatus(): Status {
-  return {
-    W1: {
-      B1: false,
-      E1: false,
-      B2: false,
-      B3: false,
-    },
-    W2: {
-      B1: false,
-      B2: false,
-      B3: false,
-    },
-    W3: {
-      B1: false,
-      B2: false,
-      E1: false,
-      B3: false,
-    },
-    W4: {
-      B1: false,
-      B2: false,
-      B3: false,
-      B4: false,
-    },
-    W5: {
-      B1: false,
-      B2: false,
-      B3: false,
-      B4: false,
-    },
-    W6: {
-      B1: false,
-      B2: false,
-      B3: false,
-    },
-    W7: {
-      E1: false,
-      B1: false,
-      B2: false,
-      B3: false,
-    },
-  };
-}
-function createCMStatus(): Status {
-  return {
-    W3: {
-      B2: false,
-    },
-    W4: {
-      B1: false,
-      B2: false,
-      B3: false,
-      B4: false,
-    },
-    W5: {
-      B1: false,
-      B4: false,
-    },
-    W6: {
-      B1: false,
-      B2: false,
-      B3: false,
-    },
-    W7: {
-      B1: false,
-      B2: false,
-      B3: false,
-    },
-  };
-}
-
-function setFlag(key: keyof Statuses, wing: string, boss: string) {
-  return (status: Statuses) => {
-    status[key][wing][boss] = true;
-  };
-}
