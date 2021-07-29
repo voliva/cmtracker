@@ -58,6 +58,7 @@ const Refresh = () => {
       method: "POST",
     });
     setIsRefreshing(false);
+    triggerRefresh();
   };
 
   return (
