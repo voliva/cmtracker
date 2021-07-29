@@ -1,46 +1,31 @@
-# Getting Started with Create React App
+# GW2 Raid Progress Tracker
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This app will let you track the weekly raid status for everyone in your team.
 
-## Available Scripts
+This is in early development, "use at your own risk". You can try it by using this [public demo](https://wizardly-wiles-8da887.netlify.app/305485456878862536) (this link might break in a future).
 
-In the project directory, you can run:
+Please, deploy your own instance to use this.
 
-### `yarn start`
+## Deployment
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+This project is built to be deployed with [Netlify](https://www.netlify.com/) + [Fauna](https://fauna.com/)
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### Fauna config
 
-### `yarn test`
+1. Login or create a Fauna account.
+2. Create a new database in Fauna. Note that depending on the region you pick, you will need to select a specific endpoint later on.
+3. Create a new collection in that database with the name `teams`.
+4. In the "Security" tab of the dashboard, create a new Key with CRUD rights to that database (or just pick role "server" if you don't care). Note down the secret key.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Netlify config
 
-### `yarn build`
+1. Login or create a Netlify account
+2. Create a new site with this app (either fork this repo and use your fork, or download as zip and upload to Netlify).
+3. On the site settings add the following environment variables (while creating they're hidden under Advanced):
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+- `FAUNA_KEY`: The secret key from Fauna
+- `FAUNA_DOMAIN`: The fauna endpoint based on the database region you selected. Endpont list can be found in [Fauna docs](https://docs.fauna.com/fauna/current/api/fql/region_groups#how-to-use-region-groups)
+- `REACT_APP_SERVER_ROOT`:
+  `/.netlify/functions`
+- `TEAM_LIMIT`: (optional) a number to limit the number of teams that can be created on this environment.
+- `REACT_APP_PLAYER_LIMIT`: (optional) a number to limit the number of players that each team can have on this environment
