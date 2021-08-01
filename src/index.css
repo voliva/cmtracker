@@ -52,6 +52,12 @@ body {
   .table-results .wing-end {
     border-right-color: #333;
   }
+  .table-results .bg-done {
+    @apply bg-green-500;
+  }
+  .table-results .bg-missing {
+    @apply bg-red-500;
+  }
 }
 
 @layer components {
