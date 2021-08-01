@@ -28,6 +28,7 @@ export function Team() {
         <Filter />
         <Results />
         <AddPlayer />
+        <Feedback />
       </div>
     </Subscribe>
   );
@@ -202,3 +203,13 @@ const AddPlayer = () => {
     </form>
   );
 };
+
+const Feedback = () => (
+  <div className="text-sm bg-gray-100 p-1 rounded text-gray-800 mt-10">
+    <p>Like what you see? Do you have some feedback?</p>
+    <p>
+      Reach me out in-game [EU] blackoil.2673 or open an issue on{" "}
+      <a href="https://github.com/voliva/cmtracker">GitHub</a>.
+    </p>
+  </div>
+);

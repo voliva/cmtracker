@@ -42,6 +42,11 @@ export function Create() {
           In here you can create a new empty team. If you are already part of a
           team, please use your team's link instead.
         </p>
+        <p>
+          Please, consider deploying your own version of this app by following
+          the steps posted in{" "}
+          <a href="https://github.com/voliva/cmtracker">GitHub</a>.
+        </p>
       </Card>
       <Card>
         <form
