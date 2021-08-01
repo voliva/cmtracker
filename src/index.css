@@ -24,6 +24,12 @@ body {
   button {
     @apply py-1 px-2 rounded border bg-gray-100;
   }
+  a {
+    @apply underline text-blue-800;
+  }
+  a:visited {
+    @apply text-purple-800;
+  }
 }
 
 @layer components {
@@ -51,6 +57,26 @@ body {
   }
   .table-results .wing-end {
     border-right-color: #333;
+  }
+  .table-results .bg-done {
+    @apply bg-green-500;
+  }
+  .table-results .bg-missing {
+    @apply bg-red-500;
+  }
+  .table-results .bg-na {
+    @apply bg-gray-300;
+  }
+
+  .table-results-compact td,
+  .table-results-compact th {
+    @apply py-0;
+  }
+  .table-results-compact th:not(:first-child) {
+    @apply px-0;
+  }
+  .table-results-compact td:not(:first-child) {
+    @apply px-2;
   }
 }
 
