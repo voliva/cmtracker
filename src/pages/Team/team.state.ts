@@ -178,3 +178,16 @@ export const raids = wings.flatMap(({ wing: w, raids }) =>
     raid: r,
   }))
 );
+
+export const [compactToggle$, toggleCompactView] = createSignal();
+const initialCompact = localStorage.getItem("compactView") === "true";
+
+export const [useShowCompactView] = bind(
+  compactToggle$.pipe(
+    scan((acc) => !acc, initialCompact),
+    tap((v) => {
+      localStorage.setItem("compactView", String(v));
+    }),
+    startWith(initialCompact)
+  )
+);

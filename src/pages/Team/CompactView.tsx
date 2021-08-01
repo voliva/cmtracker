@@ -18,7 +18,7 @@ export const CompactView = () => {
 
   return (
     <div className="overflow-auto flex">
-      <table className="table-auto table-results">
+      <table className="table-auto table-results table-results-compact m-auto">
         <thead>
           <tr>
             <th></th>
@@ -41,7 +41,7 @@ export const CompactView = () => {
                   end ? "wing-end" : ""
                 }`}
               >
-                {raid}
+                {raid.startsWith("E") ? "E" : raid.replace("B", "")}
               </th>
             ))}
           </tr>
@@ -110,6 +110,9 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
             "bg-missing":
               (statusType === "normal" && normal[wing]?.[raid] === false) ||
               (statusType === "perm" && perm[wing]?.[raid] === false),
+            "bg-na":
+              (statusType === "normal" && normal[wing]?.[raid] === undefined) ||
+              (statusType === "perm" && perm[wing]?.[raid] === undefined),
           })}
         ></td>
       ))}

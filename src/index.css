@@ -58,6 +58,20 @@ body {
   .table-results .bg-missing {
     @apply bg-red-500;
   }
+  .table-results .bg-na {
+    @apply bg-gray-300;
+  }
+
+  .table-results-compact td,
+  .table-results-compact th {
+    @apply py-0;
+  }
+  .table-results-compact th:not(:first-child) {
+    @apply px-0;
+  }
+  .table-results-compact td:not(:first-child) {
+    @apply px-2;
+  }
 }
 
 @layer components {

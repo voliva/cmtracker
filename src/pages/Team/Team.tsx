@@ -5,14 +5,16 @@ import { useRouteMatch } from "react-router-dom";
 import { format } from "timeago.js";
 import { Card } from "../../components/Card";
 import { CompactView } from "./CompactView";
-import "./ResultsTable";
+import { ResultsTable } from "./ResultsTable";
 import {
   setFilter,
+  toggleCompactView,
   toggleStatusType,
   triggerRefresh,
   useDateRefreshed,
   useFilter,
   usePlayerCount,
+  useShowCompactView,
   useStatusType,
   useTeamName,
 } from "./team.state";
@@ -24,12 +26,15 @@ export function Team() {
         <Title />
         <Refresh />
         <Filter />
-        <CompactView />
+        <Results />
         <AddPlayer />
       </div>
     </Subscribe>
   );
 }
+
+const Results = () =>
+  useShowCompactView() ? <CompactView /> : <ResultsTable />;
 
 const Title = () => {
   const name = useTeamName();
@@ -92,6 +97,7 @@ const useRerenderEveryTimediff = (date: Date) => {
 const Filter = () => {
   const filter = useFilter();
   const statusType = useStatusType();
+  const showCompact = useShowCompactView();
 
   return (
     <div className="flex">
@@ -120,6 +126,14 @@ const Filter = () => {
           CM
         </button>
       </div>
+      <button
+        className={classNames("flex-grow-0", "flex-shrink-0", {
+          "bg-green-100": showCompact,
+        })}
+        onClick={toggleCompactView}
+      >
+        Compact
+      </button>
     </div>
   );
 };
