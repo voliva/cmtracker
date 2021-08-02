@@ -1,7 +1,15 @@
 import { Handler } from "@netlify/functions";
 import { query as q } from "faunadb";
-import { countTeams, createTeam, dbRun, getTeamById, Player } from "./faunadb";
-import { requestPlayerStatus } from "./gw2API";
+import {
+  countTeams,
+  createTeam,
+  dbRun,
+  getTeamById,
+  Player,
+  updateTeam,
+} from "./faunadb";
+import { createCMStatus, requestPlayerStatus } from "./gw2API";
+import { hasToReset, resetWeeklyTeam } from "./refresh";
 
 export const handler: Handler = async (event) => {
   const params = event.path.replace("/.netlify/functions/team", "").split("/");
@@ -11,6 +19,11 @@ export const handler: Handler = async (event) => {
       if (params.length !== 2) return;
       return dbRun(async (client) => {
         const team = (await getTeamById(client, params[1])).data;
+
+        if (hasToReset(team)) {
+          resetWeeklyTeam(team);
+          await updateTeam(client, params[1], team);
+        }
 
         const players = team.players.map(({ apiKey: _, ...rest }) => rest);
 
@@ -94,6 +107,7 @@ export const handler: Handler = async (event) => {
           const status = await requestPlayerStatus({ id, apiKey });
           const player: Player = {
             ...status,
+            weekly: createCMStatus(),
             id,
             name,
             apiKey,
@@ -127,13 +141,7 @@ export const handler: Handler = async (event) => {
           (p) => p.id !== Number(params[2])
         );
 
-        await client.query(
-          q.Update(q.Ref(q.Collection("teams"), params[1]), {
-            data: {
-              players,
-            },
-          })
-        );
+        await updateTeam(client, params[1], { players });
 
         return {
           statusCode: 200,

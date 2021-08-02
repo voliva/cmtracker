@@ -133,7 +133,7 @@ export async function requestPlayerStatus({
   return { id, ...statuses };
 }
 
-function createStatus(): Status {
+export function createStatus(): Status {
   return {
     W1: {
       B1: false,
@@ -177,7 +177,7 @@ function createStatus(): Status {
     },
   };
 }
-function createCMStatus(): Status {
+export function createCMStatus(): Status {
   return {
     W3: {
       B2: false,
