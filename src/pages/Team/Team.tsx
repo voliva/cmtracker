@@ -8,6 +8,7 @@ import { CompactView } from "./CompactView";
 import { ResultsTable } from "./ResultsTable";
 import {
   setFilter,
+  StatusType,
   toggleCompactView,
   toggleStatusType,
   triggerRefresh,
@@ -101,41 +102,58 @@ const Filter = () => {
   const showCompact = useShowCompactView();
 
   return (
-    <div className="flex">
-      <input
-        className="flex-grow"
-        type="Text"
-        placeholder="Filter by name"
-        value={filter}
-        onChange={(evt) => setFilter(evt.target.value)}
-      />
-      <div className="flex-grow-0 flex-shrink-0 button-group">
+    <>
+      <div className="flex">
+        <input
+          className="flex-grow"
+          type="Text"
+          placeholder="Filter by name"
+          value={filter}
+          onChange={(evt) => setFilter(evt.target.value)}
+        />
+        <div className="flex-grow-0 flex-shrink-0 button-group">
+          <button
+            className={classNames({
+              "bg-green-100": statusType === StatusType.Normal,
+            })}
+            onClick={() => toggleStatusType(StatusType.Normal)}
+          >
+            Normal
+          </button>
+          <button
+            className={classNames({
+              "bg-green-100": statusType === StatusType.Weekly,
+            })}
+            onClick={() => toggleStatusType(StatusType.Weekly)}
+          >
+            Weekly CM
+          </button>
+          <button
+            className={classNames({
+              "bg-green-100": statusType === StatusType.Perm,
+            })}
+            onClick={() => toggleStatusType(StatusType.Perm)}
+          >
+            CM Achiev
+          </button>
+        </div>
         <button
-          className={classNames({
-            "bg-green-100": statusType === "normal",
+          className={classNames("flex-grow-0", "flex-shrink-0", {
+            "bg-green-100": showCompact,
           })}
-          onClick={() => toggleStatusType("normal")}
+          onClick={toggleCompactView}
         >
-          Normal
-        </button>
-        <button
-          className={classNames({
-            "bg-green-100": statusType === "perm",
-          })}
-          onClick={() => toggleStatusType("perm")}
-        >
-          CM
+          Compact
         </button>
       </div>
-      <button
-        className={classNames("flex-grow-0", "flex-shrink-0", {
-          "bg-green-100": showCompact,
-        })}
-        onClick={toggleCompactView}
-      >
-        Compact
-      </button>
-    </div>
+      {statusType === StatusType.Weekly && (
+        <Card>
+          Unfortunately the GW2 API doesn't provide the progression info for
+          weekly CMs yet, but you can manually fill in your completed CMs by
+          clicking on the appropriate cell.
+        </Card>
+      )}
+    </>
   );
 };
 

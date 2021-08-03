@@ -8,12 +8,14 @@ export interface Player {
   id: number;
   perm: Status;
   normal: Status;
+  weekly: Status;
 }
 
 export interface Team {
   name: string;
   players: Array<Player>;
   refreshed: number;
+  lastReset: number;
 }
 
 export interface FResult<T> {
@@ -49,6 +51,14 @@ export function getTeamById(client: Client, id: string) {
   return client.query<FResult<Team>>(q.Get(q.Ref(q.Collection("teams"), id)));
 }
 
+export function updateTeam(client: Client, id: string, data: Partial<Team>) {
+  return client.query(
+    q.Update(q.Ref(q.Collection("teams"), id), {
+      data,
+    })
+  );
+}
+
 // Only gets first page ;D 64 by default.
 // It could be configured or make it fancier, but I will just limit amount of teams to less than 64
 export function getAllTeams(client: Client) {
@@ -59,7 +69,12 @@ export function getAllTeams(client: Client) {
 }
 
 export function createTeam(client: Client, name: string) {
-  const team: Team = { name, players: [], refreshed: Date.now() };
+  const team: Team = {
+    name,
+    players: [],
+    refreshed: Date.now(),
+    lastReset: Date.now(),
+  };
   return client.query<FResult<Team>>(q.Create("teams", { data: team }));
 }
 

@@ -5,6 +5,8 @@ import trash from "../../assets/trash.svg";
 import {
   raids,
   setPlayerMarked,
+  StatusType,
+  toggleWeeklyValue,
   triggerRefresh,
   useIsDeleteEnabled,
   usePlayerIds,
@@ -61,7 +63,7 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
   const statusType = useStatusType();
   const deleteEnabled = useIsDeleteEnabled();
   const teamId = useRouteMatch<{ id: string }>().params.id;
-  const { name, normal, perm } = info;
+  const { name, normal, perm, weekly } = info;
 
   const isMarked = markStatus === "marked";
 
@@ -75,6 +77,13 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
     setIsSubmitting(false);
 
     triggerRefresh();
+  };
+
+  const toggleCell = (wing: string, boss: string) => {
+    if (statusType !== StatusType.Weekly) {
+      return;
+    }
+    toggleWeeklyValue(id, { wing, boss });
   };
 
   return (
@@ -104,16 +113,30 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
             "wing-start": start,
             "wing-end": end,
             "opacity-50": markStatus === "greyedout",
+            "cursor-pointer":
+              statusType === StatusType.Weekly &&
+              weekly[wing]?.[raid] !== undefined,
             "bg-done":
-              (statusType === "normal" && normal[wing]?.[raid] === true) ||
-              (statusType === "perm" && perm[wing]?.[raid] === true),
+              (statusType === StatusType.Normal &&
+                normal[wing]?.[raid] === true) ||
+              (statusType === StatusType.Weekly &&
+                weekly[wing]?.[raid] === true) ||
+              (statusType === StatusType.Perm && perm[wing]?.[raid] === true),
             "bg-missing":
-              (statusType === "normal" && normal[wing]?.[raid] === false) ||
-              (statusType === "perm" && perm[wing]?.[raid] === false),
+              (statusType === StatusType.Normal &&
+                normal[wing]?.[raid] === false) ||
+              (statusType === StatusType.Weekly &&
+                weekly[wing]?.[raid] === false) ||
+              (statusType === StatusType.Perm && perm[wing]?.[raid] === false),
             "bg-na":
-              (statusType === "normal" && normal[wing]?.[raid] === undefined) ||
-              (statusType === "perm" && perm[wing]?.[raid] === undefined),
+              (statusType === StatusType.Normal &&
+                normal[wing]?.[raid] === undefined) ||
+              (statusType === StatusType.Weekly &&
+                weekly[wing]?.[raid] === undefined) ||
+              (statusType === StatusType.Perm &&
+                perm[wing]?.[raid] === undefined),
           })}
+          onClick={() => toggleCell(wing, raid)}
         ></td>
       ))}
     </tr>

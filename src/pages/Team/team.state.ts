@@ -1,19 +1,29 @@
 import { bind, shareLatest } from "@react-rxjs/core";
-import { createSignal } from "@react-rxjs/utils";
+import {
+  combineKeys,
+  createKeyedSignal,
+  createSignal,
+  mergeWithKey,
+} from "@react-rxjs/utils";
 import { matchPath } from "react-router-dom";
 import {
   combineLatest,
+  concatMap,
   defer,
   distinctUntilChanged,
   filter,
+  from,
   interval,
   map,
   mapTo,
   merge,
+  mergeMap,
   scan,
+  skip,
   startWith,
   switchMap,
   tap,
+  withLatestFrom,
 } from "rxjs";
 import { history$ } from "../../history";
 
@@ -27,6 +37,7 @@ interface PlayerInfo {
   name: string;
   normal: EncounterInfo;
   perm: EncounterInfo;
+  weekly: EncounterInfo;
 }
 type EncounterInfo = Record<string, Record<string, boolean>>;
 
@@ -42,16 +53,19 @@ export const [useIsDeleteEnabled] = bind(
 export const [filterChange$, setFilter] = createSignal<string>();
 export const [useFilter, filter$] = bind(filterChange$, "");
 
-export const [statusTypeChange$, toggleStatusType] = createSignal<
-  "normal" | "perm"
->();
-const initialPreference = ((): "perm" | "normal" => {
+export enum StatusType {
+  Normal = "normal",
+  Perm = "perm",
+  Weekly = "weekly",
+}
+export const [statusTypeChange$, toggleStatusType] = createSignal<StatusType>();
+const initialPreference = ((): StatusType => {
   const v = localStorage.getItem("statusType");
   if (v === null || v === "null") {
     // String null for backwards-compatibility with an older version
-    return "normal";
+    return StatusType.Normal;
   }
-  return v as "perm" | "normal";
+  return v as StatusType;
 })();
 
 export const [useStatusType] = bind(
@@ -82,16 +96,16 @@ const markedPlayer$ = defer(() =>
   )
 );
 
+const teamId$ = history$.pipe(
+  map((history) => matchPath<{ id: string }>(history.pathname, "/:id")!),
+  filter((v) => !!v),
+  map((v) => v.params.id),
+  distinctUntilChanged()
+);
+
 const teamInfo$ = merge(infoRefresh$, interval(30 * 60 * 1000)).pipe(
   startWith(null),
-  switchMap(() =>
-    history$.pipe(
-      map((history) => matchPath<{ id: string }>(history.pathname, "/:id")!),
-      filter((v) => !!v),
-      map((v) => v.params.id),
-      distinctUntilChanged()
-    )
-  ),
+  switchMap(() => teamId$),
   switchMap((id) => fetch(process.env.REACT_APP_SERVER_ROOT + "/team/" + id)),
   switchMap((result) => result.json() as Promise<TeamInfo>),
   shareLatest()
@@ -105,7 +119,7 @@ export const [usePlayerCount] = bind(
   teamInfo$.pipe(map((t) => t.players.length))
 );
 
-export const [usePlayerIds] = bind(
+export const [usePlayerIds, playerIds$] = bind(
   combineLatest({
     teamInfo: teamInfo$,
     filter: filter$,
@@ -134,11 +148,30 @@ export const [usePlayerIds] = bind(
   )
 );
 
-export const [usePlayerInfo] = bind((id: string) =>
+export const [weeklyToggle$, toggleWeeklyValue] = createKeyedSignal<
+  string,
+  { wing: string; boss: string }
+>();
+
+export const [usePlayerInfo, playerInfo$] = bind((id: string) =>
   combineLatest({
-    info: teamInfo$.pipe(
-      map((info) => info.players.find((p) => p.id === id)!),
-      filter((v) => !!v)
+    info: mergeWithKey({
+      reset: teamInfo$.pipe(
+        map((info) => info.players.find((p) => p.id === id)!),
+        filter((v) => !!v)
+      ),
+      weekly: weeklyToggle$(id),
+    }).pipe(
+      scan((acc, v) => {
+        if (v.type === "reset") return v.payload;
+        const { boss, wing } = v.payload;
+        if (acc.weekly[wing]?.[boss] === undefined) {
+          console.warn("Not defined for ", wing, boss);
+          return acc;
+        }
+        acc.weekly[wing][boss] = !acc.weekly[wing][boss];
+        return acc;
+      }, null! as PlayerInfo)
     ),
     markStatus: combineLatest({
       marked: markedPlayer$,
@@ -155,6 +188,29 @@ export const [usePlayerInfo] = bind((id: string) =>
     ),
   })
 );
+
+const playerWeeklyChange$ = combineKeys(playerIds$, weeklyToggle$).pipe(
+  switchMap((toggles) =>
+    from(toggles.changes).pipe(
+      mergeMap((id) => playerInfo$(id).pipe(skip(1))),
+      withLatestFrom(teamId$),
+      concatMap(([{ info }, teamId]) => {
+        const { wing, boss } = toggles.get(info.id)!;
+        const newValue = info.weekly[wing][boss];
+
+        return fetch(
+          process.env.REACT_APP_SERVER_ROOT + "/team/" + teamId + "/" + info.id,
+          {
+            method: "PATCH",
+            body: JSON.stringify({ type: "weekly", wing, boss, newValue }),
+          }
+        );
+      })
+    )
+  )
+);
+
+playerWeeklyChange$.subscribe();
 
 // Hardcoded data
 const raidStructure: Record<string, Array<string>> = {
