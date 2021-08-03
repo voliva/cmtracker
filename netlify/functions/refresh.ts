@@ -56,8 +56,8 @@ export function hasToReset(team: Team): boolean {
 }
 export function resetWeeklyTeam(team: Team) {
   team.players.forEach((p) => {
-    if (!team.lastReset) {
-      // When migrating, we only want to reset the weekly stat.
+    // When migrating, we only want to reset the weekly stat, but not the normal stat.
+    if (team.lastReset !== undefined) {
       p.normal = createStatus();
     }
     p.weekly = createCMStatus();

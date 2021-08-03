@@ -130,6 +130,40 @@ export const handler: Handler = async (event) => {
       } else {
         return;
       }
+    case "PATCH":
+      if (params.length !== 3) {
+        return;
+      }
+      return dbRun(async (client) => {
+        const { type, wing, boss, newValue } = JSON.parse(event.body);
+        if (type !== "weekly") {
+          return;
+        }
+
+        const team = await getTeamById(client, params[1]);
+        const player = team.data.players.find(
+          (p) => p.id === Number(params[2])
+        );
+        if (!player) {
+          return {
+            statusCode: 400,
+            error: "Player doesn't exist",
+          };
+        }
+        if (player.weekly[wing]?.[boss] === undefined) {
+          return {
+            statusCode: 400,
+            error: "Incorrect wing-boss combination",
+          };
+        }
+        player.weekly[wing][boss] = Boolean(newValue);
+
+        await updateTeam(client, params[1], { players: team.data.players });
+
+        return {
+          statusCode: 200,
+        };
+      });
     case "DELETE":
       if (params.length !== 3) {
         return;

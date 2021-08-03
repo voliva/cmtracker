@@ -26,5 +26,5 @@ GET teams/{id}
 
 POST teams - Create team { name }
 POST teams/{id} - Add player { name, key }
-PUT teams/{id}/{id} - Edit player { name }
+PATCH teams/{id}/{id} - Edit player weekly status { type: "weekly", wing, boss, newValue }
 DELETE teams/{id}/{id} - Delete player

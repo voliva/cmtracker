@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import { FC, useState } from "react";
 import { useRouteMatch } from "react-router-dom";
 import checked from "../../assets/checked.svg";
@@ -7,6 +8,8 @@ import trash from "../../assets/trash.svg";
 import {
   raids,
   setPlayerMarked,
+  StatusType,
+  toggleWeeklyValue,
   triggerRefresh,
   useIsDeleteEnabled,
   usePlayerIds,
@@ -63,7 +66,7 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
   const statusType = useStatusType();
   const deleteEnabled = useIsDeleteEnabled();
   const teamId = useRouteMatch<{ id: string }>().params.id;
-  const { name, normal, perm } = info;
+  const { name, normal, perm, weekly } = info;
 
   const isMarked = markStatus === "marked";
 
@@ -77,6 +80,13 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
     setIsSubmitting(false);
 
     triggerRefresh();
+  };
+
+  const toggleCell = (wing: string, boss: string) => {
+    if (statusType !== StatusType.Weekly) {
+      return;
+    }
+    toggleWeeklyValue(id, { wing, boss });
   };
 
   return (
@@ -102,13 +112,22 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
       {raids.map(({ wing, raid, start, end }) => (
         <td
           key={wing + raid}
-          className={`text-center ${start ? "wing-start" : ""} ${
-            end ? "wing-end" : ""
-          } ${markStatus === "greyedout" ? "opacity-50" : ""}`}
+          className={classNames("text-center", {
+            "wing-start": start,
+            "wing-end": end,
+            "opacity-50": markStatus === "greyedout",
+            "cursor-pointer":
+              statusType === StatusType.Weekly &&
+              weekly[wing]?.[raid] !== undefined,
+          })}
+          onClick={() => toggleCell(wing, raid)}
         >
           <div className="flex w-10 justify-center gap-1">
-            {statusType === "normal" && renderStatus(normal[wing]?.[raid])}
-            {statusType === "perm" && renderStatus(perm[wing]?.[raid])}
+            {statusType === StatusType.Normal &&
+              renderStatus(normal[wing]?.[raid])}
+            {statusType === StatusType.Perm && renderStatus(perm[wing]?.[raid])}
+            {statusType === StatusType.Weekly &&
+              renderStatus(weekly[wing]?.[raid])}
           </div>
         </td>
       ))}
