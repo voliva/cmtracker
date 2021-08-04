@@ -94,6 +94,7 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
           <input
             type="checkbox"
             checked={isMarked}
+            aria-label="Select to top group"
             onChange={(evt) => setPlayerMarked(id, evt.target.checked)}
           />
           <div className="flex-grow">{name}</div>
