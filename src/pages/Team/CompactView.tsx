@@ -14,6 +14,7 @@ import {
   useStatusType,
   wings,
 } from "./team.state";
+import tick from "../../assets/tick_small.svg";
 
 export const CompactView = () => {
   const ids = usePlayerIds();
@@ -106,39 +107,38 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
           )}
         </div>
       </td>
-      {raids.map(({ wing, raid, start, end }) => (
-        <td
-          key={wing + raid}
-          className={classNames("text-center", {
-            "wing-start": start,
-            "wing-end": end,
-            "opacity-50": markStatus === "greyedout",
-            "cursor-pointer":
-              statusType === StatusType.Weekly &&
-              weekly[wing]?.[raid] !== undefined,
-            "bg-done":
-              (statusType === StatusType.Normal &&
-                normal[wing]?.[raid] === true) ||
-              (statusType === StatusType.Weekly &&
-                weekly[wing]?.[raid] === true) ||
-              (statusType === StatusType.Perm && perm[wing]?.[raid] === true),
-            "bg-missing":
-              (statusType === StatusType.Normal &&
-                normal[wing]?.[raid] === false) ||
-              (statusType === StatusType.Weekly &&
-                weekly[wing]?.[raid] === false) ||
-              (statusType === StatusType.Perm && perm[wing]?.[raid] === false),
-            "bg-na":
-              (statusType === StatusType.Normal &&
-                normal[wing]?.[raid] === undefined) ||
-              (statusType === StatusType.Weekly &&
-                weekly[wing]?.[raid] === undefined) ||
-              (statusType === StatusType.Perm &&
-                perm[wing]?.[raid] === undefined),
-          })}
-          onClick={() => toggleCell(wing, raid)}
-        ></td>
-      ))}
+      {raids.map(({ wing, raid, start, end }) => {
+        const value =
+          statusType === StatusType.Normal
+            ? normal[wing]?.[raid]
+            : statusType === StatusType.Weekly
+            ? weekly[wing]?.[raid]
+            : perm[wing]?.[raid];
+        const status =
+          value === true ? "done" : value === false ? "missing" : "na";
+
+        return (
+          <td
+            key={wing + raid}
+            className={classNames("text-center bg-center bg-no-repeat", {
+              "wing-start": start,
+              "wing-end": end,
+              "opacity-50": markStatus === "greyedout",
+              "cursor-pointer":
+                statusType === StatusType.Weekly &&
+                weekly[wing]?.[raid] !== undefined,
+              "bg-done": status === "done",
+              "bg-missing": status === "missing",
+              "bg-na": status === "na",
+            })}
+            style={{
+              backgroundImage: `url(${status === "done" ? tick : ""})`,
+              backgroundSize: "70%",
+            }}
+            onClick={() => toggleCell(wing, raid)}
+          ></td>
+        );
+      })}
     </tr>
   );
 };
