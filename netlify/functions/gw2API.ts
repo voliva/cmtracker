@@ -1,3 +1,4 @@
+import { format, isAfter, startOfWeek, subWeeks } from "date-fns";
 import fetch from "node-fetch";
 
 /*
@@ -96,7 +97,7 @@ export async function requestPlayerStatus({
       return result;
     })
     .catch((err) => {
-      console.error(err);
+      console.error("achievementsP", err);
       return [] as AccountAchievement[];
     });
 
@@ -113,13 +114,29 @@ export async function requestPlayerStatus({
       return result;
     })
     .catch((err) => {
-      console.error(err);
+      console.error("weeklyP", err);
       return [] as string[];
     });
 
-  const [achievements, progression] = await Promise.all([
+  const lastResetP = fetch(
+    "https://api.guildwars2.com/v2/account?v=2019-02-21T00:00:00Z",
+    {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    }
+  )
+    .then((result) => result.json())
+    .then((result) => new Date(result.last_modified))
+    .catch((err) => {
+      console.error("lastResetP", err);
+      return new Date();
+    });
+
+  const [achievements, progression, lastReset] = await Promise.all([
     achievementsP,
     weeklyP,
+    lastResetP,
   ]);
 
   const statuses: Statuses = {
@@ -128,7 +145,11 @@ export async function requestPlayerStatus({
   };
 
   achievements.forEach((a) => achievementMap[a.id](statuses));
-  progression.forEach((p) => progressionMap[p](statuses));
+  // progression might give values which were not reset because the user
+  // hasn't logged in yet. In that case, don't populate the progression table.
+  if (isAfter(lastReset, getLastReset())) {
+    progression.forEach((p) => progressionMap[p](statuses));
+  }
 
   return { id, ...statuses };
 }
@@ -209,4 +230,18 @@ function setFlag(key: keyof Statuses, wing: string, boss: string) {
   return (status: Statuses) => {
     status[key][wing][boss] = true;
   };
+}
+
+export function getLastReset() {
+  const now = Date.now();
+  // Weekly reset happens on monday 7:30 UTC
+  const monday = startOfWeek(now);
+  // I could add 7hr 30m, but I think this will fail on days with daylight saving changes
+  // I'll format to an ISO string date with that value set, as reset happens relative to UTC.
+  const reset = new Date(format(monday, "yyyy-MM-dd") + "T07:30:00Z");
+  if (isAfter(reset, now)) {
+    // The monday before reset we would get the next reset. We want the previous one.
+    return subWeeks(reset, 1);
+  }
+  return reset;
 }
