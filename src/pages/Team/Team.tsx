@@ -1,9 +1,9 @@
 import { Subscribe } from "@react-rxjs/core";
 import classNames from "classnames";
 import { FormEvent, useEffect, useState } from "react";
-import { useRouteMatch } from "react-router-dom";
 import { format } from "timeago.js";
 import { Card } from "../../components/Card";
+import { useTeamId } from "../../history";
 import { CompactView } from "./CompactView";
 import { ResultsTable } from "./ResultsTable";
 import {
@@ -40,17 +40,33 @@ const Results = () =>
 
 const Title = () => {
   const name = useTeamName();
+  const teamId = useTeamId();
+
+  const isWizardyWiles = window.location.href.includes("wizardly-wiles-8da887");
 
   return (
-    <Card>
-      <h2>Team: {name}</h2>
-      <p>Share this URL with your team so that they can add their accounts.</p>
-    </Card>
+    <>
+      <Card>
+        <h2>Team: {name}</h2>
+        <p>
+          Share this URL with your team so that they can add their accounts.
+        </p>
+      </Card>
+      {isWizardyWiles ? (
+        <Card>
+          Important: The raid tracker has moved to a URL with an easier name.
+          Your team's updated link is{" "}
+          <a href={"https://www.gw2raidtracker.com/" + teamId}>
+            www.gw2raidtracker.com/{teamId}
+          </a>
+        </Card>
+      ) : null}
+    </>
   );
 };
 
 const Refresh = () => {
-  const teamId = useRouteMatch<{ id: string }>().params.id;
+  const teamId = useTeamId();
   const refreshDate = useDateRefreshed();
   useRerenderEveryTimediff(refreshDate);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -159,7 +175,7 @@ const Filter = () => {
 
 const AddPlayer = () => {
   const count = usePlayerCount();
-  const teamId = useRouteMatch<{ id: string }>().params.id;
+  const teamId = useTeamId();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleSubmit = async (evt: FormEvent<HTMLFormElement>) => {
     evt.preventDefault();

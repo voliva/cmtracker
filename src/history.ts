@@ -1,6 +1,7 @@
 import { createBrowserHistory } from "history";
 import { shareLatest } from "@react-rxjs/core";
 import { Observable } from "rxjs";
+import { useRouteMatch } from "react-router-dom";
 
 export const history = createBrowserHistory();
 
@@ -15,3 +16,5 @@ export const history$ = new Observable<typeof history["location"]>(
 ).pipe(shareLatest());
 
 history$.subscribe();
+
+export const useTeamId = () => useRouteMatch<{ id: string }>().params.id;

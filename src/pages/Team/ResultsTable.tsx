@@ -1,10 +1,10 @@
 import classNames from "classnames";
 import { FC, useState } from "react";
-import { useRouteMatch } from "react-router-dom";
 import checked from "../../assets/checked.svg";
 import cross from "../../assets/cross.svg";
 import neutral from "../../assets/neutral.svg";
 import trash from "../../assets/trash.svg";
+import { useTeamId } from "../../history";
 import {
   raids,
   setPlayerMarked,
@@ -65,7 +65,7 @@ const PlayerResults: FC<{ id: string }> = ({ id }) => {
   const { info, markStatus } = usePlayerInfo(id);
   const statusType = useStatusType();
   const deleteEnabled = useIsDeleteEnabled();
-  const teamId = useRouteMatch<{ id: string }>().params.id;
+  const teamId = useTeamId();
   const { name, normal, perm, weekly } = info;
 
   const isMarked = markStatus === "marked";
