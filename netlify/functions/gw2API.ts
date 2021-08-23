@@ -235,7 +235,7 @@ function setFlag(key: keyof Statuses, wing: string, boss: string) {
 export function getLastReset() {
   const now = Date.now();
   // Weekly reset happens on monday 7:30 UTC
-  const monday = startOfWeek(now);
+  const monday = startOfWeek(now, { weekStartsOn: 1 });
   // I could add 7hr 30m, but I think this will fail on days with daylight saving changes
   // I'll format to an ISO string date with that value set, as reset happens relative to UTC.
   const reset = new Date(format(monday, "yyyy-MM-dd") + "T07:30:00Z");
